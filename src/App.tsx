@@ -3,8 +3,15 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./pages/Index.tsx";
-import NotFound from "./pages/NotFound.tsx";
+import Index from "./pages/Index";
+import Checkout from "./pages/Checkout";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentFailed from "./pages/PaymentFailed";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminPackages from "./pages/AdminPackages";
+import AdminVouchers from "./pages/AdminVouchers";
+import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
@@ -16,7 +23,13 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/checkout/:packageId" element={<Checkout />} />
+          <Route path="/payment/success" element={<PaymentSuccess />} />
+          <Route path="/payment/failed" element={<PaymentFailed />} />
+          <Route path="/admin" element={<AdminLogin />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/packages" element={<AdminPackages />} />
+          <Route path="/admin/vouchers" element={<AdminVouchers />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
