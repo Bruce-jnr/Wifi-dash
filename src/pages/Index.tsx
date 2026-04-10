@@ -65,6 +65,12 @@ const Index = () => {
       <footer className="border-t py-6 text-center text-sm text-muted-foreground">
         <p>© 2026 ASUOGYA WIFI. All rights reserved.</p>
         <p className="mt-1">Connect to <strong>ASUOGYA WIFI</strong> • Login at 192.168.88.1</p>
+        <button
+          onClick={() => navigate("/admin")}
+          className="mt-3 text-xs text-muted-foreground/50 hover:text-primary transition-colors"
+        >
+          Admin
+        </button>
       </footer>
     </div>
   );
