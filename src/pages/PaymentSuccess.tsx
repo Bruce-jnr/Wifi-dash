@@ -1,10 +1,13 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Wifi, MessageSquare } from "lucide-react";
 
 const PaymentSuccess = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const code = searchParams.get("code") || "XXXX-XXXX-XXXX";
+  const ref = searchParams.get("ref") || "";
 
   return (
     <div className="min-h-screen bg-background">
@@ -17,19 +20,19 @@ const PaymentSuccess = () => {
           Payment Successful!
         </h2>
         <p className="text-muted-foreground mb-8 animate-fade-in">
-          Your voucher code has been sent via SMS to your phone number.
+          Your voucher code is ready. Connect and enjoy!
         </p>
 
         <div className="bg-card border rounded-lg p-5 mb-8 animate-fade-in text-left">
           <div className="flex items-center gap-2 mb-3">
             <MessageSquare className="h-4 w-4 text-primary" />
-            <span className="font-medium text-sm text-foreground">Check your SMS for:</span>
+            <span className="font-medium text-sm text-foreground">Your WiFi Voucher:</span>
           </div>
           <div className="bg-muted rounded-md p-4 text-sm font-mono text-foreground">
-            <p>Your WiFi Voucher Code: <strong>XXXX-XXXX-XXXX</strong></p>
+            <p>Your WiFi Voucher Code: <strong className="text-primary text-lg">{code}</strong></p>
             <p className="mt-1">Connect to <strong>ASUOGYA WIFI</strong></p>
             <p>Login at: <strong>192.168.88.1</strong></p>
-            <p className="mt-1 text-muted-foreground">Thank you!</p>
+            {ref && <p className="mt-2 text-xs text-muted-foreground">Ref: {ref}</p>}
           </div>
         </div>
 
