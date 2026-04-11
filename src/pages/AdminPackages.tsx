@@ -2,19 +2,19 @@ import { useState } from "react";
 import AdminLayout from "@/components/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { mockPackages, type Package } from "@/lib/types";
-import { Plus, Pencil, ToggleLeft, ToggleRight } from "lucide-react";
+import { type Package } from "@/lib/types";
+import { getPackages, savePackage, togglePackageActive } from "@/lib/db";
+import { Plus, ToggleLeft, ToggleRight } from "lucide-react";
 import { toast } from "sonner";
 
 const AdminPackages = () => {
-  const [packages, setPackages] = useState<Package[]>(mockPackages);
+  const [packages, setPackages] = useState<Package[]>(getPackages);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: "", price: "", description: "", validity: "", speed: "" });
 
-  const toggleActive = (id: string) => {
-    setPackages((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, active: !p.active } : p))
-    );
+  const handleToggle = (id: string) => {
+    togglePackageActive(id);
+    setPackages(getPackages());
     toast.success("Package updated");
   };
 
@@ -32,7 +32,8 @@ const AdminPackages = () => {
       speed: form.speed,
       active: true,
     };
-    setPackages((prev) => [...prev, newPkg]);
+    savePackage(newPkg);
+    setPackages(getPackages());
     setForm({ name: "", price: "", description: "", validity: "", speed: "" });
     setShowForm(false);
     toast.success("Package added");
@@ -83,7 +84,7 @@ const AdminPackages = () => {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <Button variant="ghost" size="icon" onClick={() => toggleActive(pkg.id)}>
+                    <Button variant="ghost" size="icon" onClick={() => handleToggle(pkg.id)}>
                       {pkg.active ? <ToggleRight className="h-4 w-4 text-success" /> : <ToggleLeft className="h-4 w-4" />}
                     </Button>
                   </td>

@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import PackageCard from "@/components/PackageCard";
-import { mockPackages, type Package } from "@/lib/types";
+import { type Package } from "@/lib/types";
+import { getPackages } from "@/lib/db";
 import { Wifi, Shield, Smartphone } from "lucide-react";
 
 const Index = () => {
@@ -54,7 +55,7 @@ const Index = () => {
         <div className="max-w-lg mx-auto">
           <h3 className="font-heading font-bold text-xl text-foreground mb-4">Choose a Package</h3>
           <div className="flex flex-col gap-4">
-            {mockPackages.filter(p => p.active).map((pkg) => (
+            {getPackages().filter(p => p.active).map((pkg) => (
               <PackageCard key={pkg.id} pkg={pkg} onBuy={handleBuy} />
             ))}
           </div>

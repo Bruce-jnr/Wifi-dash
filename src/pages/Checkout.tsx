@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { mockPackages } from "@/lib/types";
+import { getPackageById } from "@/lib/db";
 import { ArrowLeft, Phone, CreditCard, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -13,7 +13,7 @@ const Checkout = () => {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const pkg = mockPackages.find((p) => p.id === packageId);
+  const pkg = getPackageById(packageId || "");
 
   if (!pkg) {
     navigate("/");
