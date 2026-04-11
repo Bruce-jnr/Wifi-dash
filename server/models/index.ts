@@ -5,6 +5,7 @@ export const Admin = sequelize.define('Admin', {
   id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
   username: { type: DataTypes.STRING, unique: true, allowNull: false },
   password: { type: DataTypes.STRING, allowNull: false },
+  email: { type: DataTypes.STRING, allowNull: true },
   phone: { type: DataTypes.STRING, allowNull: true },
   otp_code: { type: DataTypes.STRING, allowNull: true },
   otp_expires: { type: DataTypes.DATE, allowNull: true }
@@ -15,7 +16,8 @@ export const Package = sequelize.define('Package', {
   name: { type: DataTypes.STRING, allowNull: false },
   data_limit: { type: DataTypes.STRING, allowNull: false },
   duration: { type: DataTypes.STRING, allowNull: false },
-  price: { type: DataTypes.DECIMAL(10, 2), allowNull: false }
+  price: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+  active: { type: DataTypes.BOOLEAN, defaultValue: true }
 });
 
 export const VoucherRequest = sequelize.define('VoucherRequest', {

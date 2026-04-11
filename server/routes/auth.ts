@@ -32,11 +32,11 @@ router.post('/login', async (req: Request, res: Response) => {
 });
 
 router.post('/request-otp', async (req: Request, res: Response) => {
-  const { username } = req.body;
+  const { phone } = req.body;
   try {
-    const admin: any = await Admin.findOne({ where: { username } });
-    if (!admin || !admin.phone) {
-      res.status(400).json({ error: 'User not found or no phone registered' });
+    const admin: any = await Admin.findOne({ where: { phone } });
+    if (!admin) {
+      res.status(400).json({ error: 'User not found or no phone registered matching this number' });
       return;
     }
 
@@ -54,9 +54,9 @@ router.post('/request-otp', async (req: Request, res: Response) => {
 });
 
 router.post('/reset-password', async (req: Request, res: Response) => {
-  const { username, otp, newPassword } = req.body;
+  const { phone, otp, newPassword } = req.body;
   try {
-    const admin: any = await Admin.findOne({ where: { username } });
+    const admin: any = await Admin.findOne({ where: { phone } });
     if (!admin) {
       res.status(400).json({ error: 'Invalid user' });
       return;

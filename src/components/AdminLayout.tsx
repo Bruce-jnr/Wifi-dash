@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Wifi, LayoutDashboard, Package, Ticket, LogOut, Menu, X } from "lucide-react";
+import { Wifi, LayoutDashboard, Package, Ticket, LogOut, Menu, X, Users } from "lucide-react";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -12,6 +12,7 @@ const navItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/admin/dashboard" },
   { id: "packages", label: "Packages", icon: Package, path: "/admin/packages" },
   { id: "vouchers", label: "Vouchers", icon: Ticket, path: "/admin/vouchers" },
+  { id: "staff", label: "Staff", icon: Users, path: "/admin/staff" }
 ];
 
 const AdminLayout = ({ children, activeTab }: AdminLayoutProps) => {

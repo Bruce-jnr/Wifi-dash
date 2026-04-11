@@ -1,49 +1,103 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AdminLayout from "@/components/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { type Package } from "@/lib/types";
-import { getPackages, savePackage, togglePackageActive } from "@/lib/db";
-import { Plus, ToggleLeft, ToggleRight } from "lucide-react";
+import { Plus, ToggleLeft, ToggleRight, Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 const AdminPackages = () => {
-  const [packages, setPackages] = useState<Package[]>(getPackages);
+  const [packages, setPackages] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: "", price: "", description: "", validity: "", speed: "" });
+  const [form, setForm] = useState({ id: "", name: "", price: "", data_limit: "", validity: "" });
 
-  const handleToggle = (id: string) => {
-    togglePackageActive(id);
-    setPackages(getPackages());
-    toast.success("Package updated");
+  const token = localStorage.getItem("admin_token");
+
+  const fetchPackages = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/client/packages");
+      if (res.ok) {
+        const data = await res.json();
+        setPackages(data);
+      }
+    } catch {
+      toast.error("Failed to load packages");
+    }
   };
 
-  const handleAdd = () => {
+  useEffect(() => {
+    fetchPackages();
+  }, []);
+
+  const handleToggle = async (id: string) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/admin/packages/${id}/toggle`, {
+        method: "PATCH",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (res.ok) {
+        toast.success("Package updated");
+        fetchPackages();
+      } else {
+        toast.error("Failed to toggle package");
+      }
+    } catch {
+      toast.error("Network Error");
+    }
+  };
+
+  const handleSave = async () => {
     if (!form.name || !form.price) {
       toast.error("Name and price are required");
       return;
     }
-    const newPkg: Package = {
-      id: String(Date.now()),
-      name: form.name,
-      price: Number(form.price),
-      description: form.description,
-      validity: form.validity,
-      speed: form.speed,
-      active: true,
-    };
-    savePackage(newPkg);
-    setPackages(getPackages());
-    setForm({ name: "", price: "", description: "", validity: "", speed: "" });
-    setShowForm(false);
-    toast.success("Package added");
+    try {
+      const url = form.id ? `http://localhost:5000/api/admin/packages/${form.id}` : `http://localhost:5000/api/admin/packages`;
+      const method = form.id ? "PUT" : "POST";
+      const payload = {
+        name: form.name,
+        price: Number(form.price),
+        data_limit: form.data_limit || "Unlimited",
+        duration: form.validity || "1 day"
+      };
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        toast.success(form.id ? "Package updated" : "Package added");
+        fetchPackages();
+        setForm({ id: "", name: "", price: "", data_limit: "", validity: "" });
+        setShowForm(false);
+      } else {
+        toast.error("Failed to save package");
+      }
+    } catch {
+      toast.error("Network Error");
+    }
+  };
+
+  const handleEdit = (pkg: any) => {
+    setForm({
+      id: pkg.id,
+      name: pkg.name,
+      price: pkg.price,
+      data_limit: pkg.data_limit,
+      validity: pkg.duration
+    });
+    setShowForm(true);
   };
 
   return (
     <AdminLayout activeTab="packages">
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-heading text-xl font-bold text-foreground">Packages</h2>
-        <Button size="sm" onClick={() => setShowForm(!showForm)}>
+        <Button size="sm" onClick={() => {
+          setForm({ id: "", name: "", price: "", data_limit: "", validity: "" });
+          setShowForm(!showForm);
+        }}>
           <Plus className="h-4 w-4 mr-1" />
           Add Package
         </Button>
@@ -53,10 +107,9 @@ const AdminPackages = () => {
         <div className="bg-card border rounded-lg p-4 mb-6 grid grid-cols-1 md:grid-cols-2 gap-3">
           <Input placeholder="Package name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           <Input placeholder="Price (GH₵)" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
-          <Input placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-          <Input placeholder="Validity (e.g. 24 Hours)" value={form.validity} onChange={(e) => setForm({ ...form, validity: e.target.value })} />
-          <Input placeholder="Speed (e.g. 10 Mbps)" value={form.speed} onChange={(e) => setForm({ ...form, speed: e.target.value })} />
-          <Button onClick={handleAdd}>Save Package</Button>
+          <Input placeholder="Data Limit (e.g. 5GB)" value={form.data_limit} onChange={(e) => setForm({ ...form, data_limit: e.target.value })} />
+          <Input placeholder="Validity Duration (e.g. 24 hours)" value={form.validity} onChange={(e) => setForm({ ...form, validity: e.target.value })} />
+          <Button onClick={handleSave}>{form.id ? "Update Package" : "Save Package"}</Button>
         </div>
       )}
 
@@ -67,6 +120,7 @@ const AdminPackages = () => {
               <tr className="border-b bg-muted/50">
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Name</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Price</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Data Limit</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Validity</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Actions</th>
@@ -77,13 +131,17 @@ const AdminPackages = () => {
                 <tr key={pkg.id} className="border-b last:border-0">
                   <td className="px-4 py-3 font-medium text-foreground">{pkg.name}</td>
                   <td className="px-4 py-3 text-foreground">GH₵ {pkg.price}</td>
-                  <td className="px-4 py-3 text-foreground">{pkg.validity}</td>
+                  <td className="px-4 py-3 text-foreground">{pkg.data_limit}</td>
+                  <td className="px-4 py-3 text-foreground">{pkg.duration}</td>
                   <td className="px-4 py-3">
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${pkg.active ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"}`}>
                       {pkg.active ? "Active" : "Inactive"}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 flex gap-2">
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(pkg)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => handleToggle(pkg.id)}>
                       {pkg.active ? <ToggleRight className="h-4 w-4 text-success" /> : <ToggleLeft className="h-4 w-4" />}
                     </Button>
@@ -97,5 +155,4 @@ const AdminPackages = () => {
     </AdminLayout>
   );
 };
-
 export default AdminPackages;
