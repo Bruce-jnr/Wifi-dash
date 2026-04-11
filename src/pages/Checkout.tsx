@@ -28,11 +28,32 @@ const Checkout = () => {
       return;
     }
     setLoading(true);
-    // TODO: Integrate Paystack
-    toast.info("Paystack integration pending — redirecting to success page for demo");
+
+    // Simulate payment + voucher claim
+    const { claimVoucher, addTransaction } = await import("@/lib/db");
+    const voucher = claimVoucher(pkg.id, phone);
+
+    if (!voucher) {
+      setLoading(false);
+      toast.error("No vouchers available for this package. Please try again later.");
+      return;
+    }
+
+    const ref = "PAY-" + Date.now();
+    addTransaction({
+      id: String(Date.now()),
+      phone,
+      paystack_reference: ref,
+      amount: pkg.price,
+      status: "success",
+      voucher_id: voucher.id,
+      created_at: new Date().toISOString(),
+    });
+
+    toast.success("Payment successful!");
     setTimeout(() => {
-      navigate("/payment/success?ref=demo123");
-    }, 1500);
+      navigate(`/payment/success?ref=${ref}&code=${voucher.code}`);
+    }, 1000);
   };
 
   return (
