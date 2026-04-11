@@ -18,16 +18,26 @@ const AdminLogin = () => {
       return;
     }
     setLoading(true);
-    // TODO: Replace with real auth via Lovable Cloud
-    setTimeout(() => {
-      if (username === "admin" && password === "admin") {
-        localStorage.setItem("admin_demo", "true");
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      
+      if (res.ok) {
+        localStorage.setItem("admin_token", data.token);
+        toast.success("Welcome back, Admin!");
         navigate("/admin/dashboard");
       } else {
-        toast.error("Invalid credentials");
+        toast.error(data.message || "Invalid credentials");
       }
+    } catch (err) {
+      toast.error("Failed to connect to backend server");
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   return (
@@ -66,7 +76,7 @@ const AdminLogin = () => {
             {loading ? "Signing in..." : "Sign In"}
           </Button>
         </form>
-        <p className="text-xs text-center text-muted-foreground mt-4">Demo: admin / admin</p>
+        <p className="text-xs text-center text-muted-foreground mt-4">admin</p>
       </div>
     </div>
   );

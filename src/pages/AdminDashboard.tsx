@@ -1,17 +1,74 @@
 import { useState, useEffect } from "react";
 import AdminLayout from "@/components/AdminLayout";
-import { Package, Ticket, DollarSign, TrendingUp, Clock } from "lucide-react";
+import { Package, Ticket, DollarSign, TrendingUp, Clock, Lock, Smartphone } from "lucide-react";
 import { getDashboardStats, getTransactions } from "@/lib/db";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 import type { Transaction } from "@/lib/types";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({ total: 0, sold: 0, remaining: 0, revenue: 0, salesToday: 0 });
   const [recentSales, setRecentSales] = useState<Transaction[]>([]);
+  const [resetStep, setResetStep] = useState<'idle'|'otp'>('idle');
+  const [otpCode, setOtpCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [submitLoading, setSubmitLoading] = useState(false);
 
   useEffect(() => {
     setStats(getDashboardStats());
     setRecentSales(getTransactions().filter((t) => t.status === "success").slice(0, 10));
   }, []);
+
+  const handleRequestOtp = async () => {
+    setSubmitLoading(true);
+    try {
+      const res = await fetch('http://localhost:5000/api/auth/request-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: 'admin' })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResetStep('otp');
+        toast.success(data.message || 'OTP sent successfully!');
+      } else {
+        toast.error(data.error || 'Failed to send OTP');
+      }
+    } catch (e) {
+      toast.error('Network error');
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!otpCode || !newPassword) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+    setSubmitLoading(true);
+    try {
+      const res = await fetch('http://localhost:5000/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: 'admin', otp: otpCode, newPassword })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message || 'Password reset successfully!');
+        setResetStep('idle');
+        setOtpCode('');
+        setNewPassword('');
+      } else {
+        toast.error(data.error || 'Failed to reset password');
+      }
+    } catch (e) {
+      toast.error('Network error');
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
 
   const statCards = [
     { label: "Total Vouchers", value: String(stats.total), icon: Ticket, color: "text-primary" },
@@ -69,6 +126,41 @@ const AdminDashboard = () => {
           </table>
         </div>
       </div>
+
+      <h3 className="font-heading font-semibold text-foreground mt-8 mb-3 flex items-center gap-2">
+        <Lock className="w-5 h-5"/> Security Settings
+      </h3>
+      <div className="bg-card border rounded-lg p-5 mb-8">
+        <p className="text-sm text-muted-foreground mb-4">
+          Update your admin dashboard password securely. We will send a 6-digit confirmation OTP to your registered phone number via Arkesel.
+        </p>
+        
+        {resetStep === 'idle' && (
+           <Button onClick={handleRequestOtp} disabled={submitLoading} variant="outline">
+             <Smartphone className="w-4 h-4 mr-2" />
+             {submitLoading ? "Requesting..." : "Request Reset OTP"}
+           </Button>
+        )}
+
+        {resetStep === 'otp' && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="text-xs font-medium block mb-1">OTP Code</label>
+              <Input type="text" placeholder="123456" value={otpCode} onChange={e => setOtpCode(e.target.value)} />
+            </div>
+            <div>
+              <label className="text-xs font-medium block mb-1">New Password</label>
+              <Input type="password" placeholder="••••••••" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+            </div>
+            <div className="flex items-end">
+              <Button className="w-full" onClick={handleResetPassword} disabled={submitLoading}>
+                {submitLoading ? "Verifying..." : "Update Password"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+
     </AdminLayout>
   );
 };

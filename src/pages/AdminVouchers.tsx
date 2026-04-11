@@ -1,110 +1,92 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AdminLayout from "@/components/AdminLayout";
 import { Button } from "@/components/ui/button";
-import { Upload, FileText } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { getVouchers, addVouchers, type VoucherRow } from "@/lib/db";
-import { getPackages } from "@/lib/db";
+import { Loader2, Ticket } from "lucide-react";
+
+interface RequestRow {
+  id: number;
+  client_phone: string;
+  package_id: number;
+  status: string;
+  createdAt: string;
+  Package: {
+    name: string;
+    price: number;
+  };
+}
 
 const AdminVouchers = () => {
-  const [vouchers, setVouchers] = useState<VoucherRow[]>(getVouchers);
-  const [bulkText, setBulkText] = useState("");
-  const [showUpload, setShowUpload] = useState(false);
-  const [filter, setFilter] = useState<"all" | "unused" | "sold">("all");
+  const [requests, setRequests] = useState<RequestRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [generationLoading, setGenerationLoading] = useState<number | null>(null);
 
-  const packages = getPackages();
+  const [codes, setCodes] = useState<Record<number, string>>({});
 
-  const handleBulkAdd = () => {
-    const lines = bulkText.trim().split("\n").filter(Boolean);
-    if (lines.length === 0) {
-      toast.error("Please enter voucher codes");
+  const token = localStorage.getItem("admin_token");
+
+  const fetchRequests = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/admin/requests', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRequests(data);
+      }
+    } catch (err) {
+      toast.error("Error fetching requests from backend");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (token) fetchRequests();
+  }, [token]);
+
+  const handleGenerate = async (requestId: number) => {
+    const code = codes[requestId];
+    if (!code) {
+      toast.error("Please enter the manually generated voucher code.");
       return;
     }
-    const newVouchers: VoucherRow[] = lines.map((line, i) => {
-      const parts = line.split(",");
-      const pkgName = parts[1]?.trim() || "Unassigned";
-      const pkg = packages.find((p) => p.name === pkgName || p.id === pkgName);
-      return {
-        id: String(Date.now() + i),
-        code: parts[0]?.trim() || "",
-        package_id: pkg?.id || "",
-        package_name: pkg?.name || pkgName,
-        status: "unused" as const,
-        sold_to_phone: null,
-        sold_at: null,
-      };
-    });
-    addVouchers(newVouchers);
-    setVouchers(getVouchers());
-    setBulkText("");
-    setShowUpload(false);
-    toast.success(`${newVouchers.length} voucher(s) added`);
-  };
 
-  const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const text = ev.target?.result as string;
-      const lines = text.split("\n").slice(1).filter(Boolean);
-      setBulkText(lines.join("\n"));
-      toast.info(`${lines.length} rows loaded from CSV. Click "Add Vouchers" to save.`);
-    };
-    reader.readAsText(file);
-  };
+    setGenerationLoading(requestId);
+    try {
+      const res = await fetch(`http://localhost:5000/api/admin/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ requestId, code })
+      });
 
-  const filtered = filter === "all" ? vouchers : vouchers.filter((v) => v.status === filter);
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message || "Voucher Generated and SMS Sent!");
+        fetchRequests(); // Refresh list
+      } else {
+        toast.error(data.error || "Failed to generate");
+      }
+    } catch (err) {
+      toast.error("Network Error configuring voucher");
+    } finally {
+      setGenerationLoading(null);
+    }
+  };
 
   return (
     <AdminLayout activeTab="vouchers">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <h2 className="font-heading text-xl font-bold text-foreground">Vouchers</h2>
-        <Button size="sm" onClick={() => setShowUpload(!showUpload)}>
-          <Upload className="h-4 w-4 mr-1" />
-          Upload Vouchers
+        <h2 className="font-heading text-xl font-bold text-foreground">Pending Client Requests</h2>
+        <Button size="sm" onClick={fetchRequests} disabled={loading}>
+          {loading ? "Refreshing..." : "Refresh Requests"}
         </Button>
-      </div>
-
-      {showUpload && (
-        <div className="bg-card border rounded-lg p-4 mb-6 space-y-3">
-          <p className="text-sm text-muted-foreground">
-            Paste voucher codes (one per line, format: <code>CODE,PACKAGE_NAME</code>) or upload a CSV.
-          </p>
-          <textarea
-            className="w-full h-32 border rounded-md p-3 text-sm font-mono bg-background text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-            placeholder={"ABC123,Daily Pass\nXYZ456,Daily Pass\nDEF789,Weekly Pass"}
-            value={bulkText}
-            onChange={(e) => setBulkText(e.target.value)}
-          />
-          <div className="flex items-center gap-3">
-            <Button onClick={handleBulkAdd}>Add Vouchers</Button>
-            <label className="cursor-pointer">
-              <input type="file" accept=".csv" className="hidden" onChange={handleCSVUpload} />
-              <span className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
-                <FileText className="h-4 w-4" />
-                Upload CSV
-              </span>
-            </label>
-          </div>
-        </div>
-      )}
-
-      <div className="flex gap-2 mb-4">
-        {(["all", "unused", "sold"] as const).map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-              filter === f ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-            }`}
-          >
-            {f.charAt(0).toUpperCase() + f.slice(1)}
-            {f === "all" && ` (${vouchers.length})`}
-            {f === "unused" && ` (${vouchers.filter((v) => v.status === "unused").length})`}
-            {f === "sold" && ` (${vouchers.filter((v) => v.status === "sold").length})`}
-          </button>
-        ))}
       </div>
 
       <div className="bg-card border rounded-lg overflow-hidden">
@@ -112,34 +94,43 @@ const AdminVouchers = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Code</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">ID</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Phone</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Package</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Sold To</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Date</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Price</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Action</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {requests.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                    No vouchers yet. Upload some to get started!
+                    {loading ? "Loading..." : "No pending requests found."}
                   </td>
                 </tr>
               ) : (
-                filtered.map((v) => (
-                  <tr key={v.id} className="border-b last:border-0">
-                    <td className="px-4 py-3 font-mono font-medium text-foreground">{v.code}</td>
-                    <td className="px-4 py-3 text-foreground">{v.package_name}</td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                        v.status === "unused" ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
-                      }`}>
-                        {v.status}
-                      </span>
+                requests.map((r) => (
+                  <tr key={r.id} className="border-b last:border-0">
+                    <td className="px-4 py-3 font-mono font-medium text-foreground">#{r.id}</td>
+                    <td className="px-4 py-3 text-foreground">{r.client_phone}</td>
+                    <td className="px-4 py-3 font-medium">{r.Package?.name}</td>
+                    <td className="px-4 py-3 text-primary font-bold">GH₵ {r.Package?.price}</td>
+                    <td className="px-4 py-2 flex items-center space-x-2 w-72">
+                      <Input 
+                        placeholder="Manual Voucher Code..." 
+                        className="h-8 text-xs font-mono"
+                        value={codes[r.id] || ''}
+                        onChange={(e) => setCodes({...codes, [r.id]: e.target.value})}
+                      />
+                      <Button 
+                        size="sm" 
+                        variant="default"
+                        disabled={generationLoading === r.id || !codes[r.id]}
+                        onClick={() => handleGenerate(r.id)}
+                      >
+                       {generationLoading === r.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Ticket className="h-4 w-4"/>}
+                      </Button>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground font-mono">{v.sold_to_phone || "—"}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{v.sold_at ? new Date(v.sold_at).toLocaleDateString() : "—"}</td>
                   </tr>
                 ))
               )}

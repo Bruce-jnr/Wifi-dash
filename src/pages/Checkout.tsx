@@ -29,31 +29,27 @@ const Checkout = () => {
     }
     setLoading(true);
 
-    // Simulate payment + voucher claim
-    const { claimVoucher, addTransaction } = await import("@/lib/db");
-    const voucher = claimVoucher(pkg.id, phone);
+    try {
+      const res = await fetch('http://localhost:5000/api/client/request', {
+        method: 'POST',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, packageId: pkg.id })
+      });
+      
+      if (!res.ok) {
+        throw new Error('Failed to submit request');
+      }
 
-    if (!voucher) {
+      toast.success("Request received! An admin will process your voucher shortly via SMS.");
+      setTimeout(() => {
+        navigate('/');
+      }, 1500);
+
+    } catch (error) {
+      toast.error("Network Error: Could not reach the backend.");
+    } finally {
       setLoading(false);
-      toast.error("No vouchers available for this package. Please try again later.");
-      return;
     }
-
-    const ref = "PAY-" + Date.now();
-    addTransaction({
-      id: String(Date.now()),
-      phone,
-      paystack_reference: ref,
-      amount: pkg.price,
-      status: "success",
-      voucher_id: voucher.id,
-      created_at: new Date().toISOString(),
-    });
-
-    toast.success("Payment successful!");
-    setTimeout(() => {
-      navigate(`/payment/success?ref=${ref}&code=${voucher.code}`);
-    }, 1000);
   };
 
   return (
