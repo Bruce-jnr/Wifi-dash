@@ -1,32 +1,52 @@
 import { useState, useEffect } from "react";
 import AdminLayout from "@/components/AdminLayout";
-import { Package, Ticket, DollarSign, TrendingUp, Clock, Lock, Smartphone } from "lucide-react";
-import { getDashboardStats, getTransactions } from "@/lib/db";
+import { Package, Ticket, DollarSign, TrendingUp, Lock, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import type { Transaction } from "@/lib/types";
 
 const AdminDashboard = () => {
-  const [stats, setStats] = useState({ total: 0, sold: 0, remaining: 0, revenue: 0, salesToday: 0 });
-  const [recentSales, setRecentSales] = useState<Transaction[]>([]);
-  const [resetStep, setResetStep] = useState<'idle'|'otp'>('idle');
+  const [stats, setStats] = useState({ total: 0, fulfilled: 0, pending: 0, revenue: 0 });
+  const [recentRequests, setRecentRequests] = useState<any[]>([]);
+  const [resetStep, setResetStep] = useState<'idle' | 'otp'>('idle');
+  const [phone, setPhone] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [submitLoading, setSubmitLoading] = useState(false);
 
   useEffect(() => {
-    setStats(getDashboardStats());
-    setRecentSales(getTransactions().filter((t) => t.status === "success").slice(0, 10));
+    const token = localStorage.getItem("admin_token");
+    const headers = { "Authorization": `Bearer ${token}` };
+
+    // Fetch pending voucher requests for stats
+    fetch("http://localhost:5000/api/admin/requests", { headers })
+      .then(r => r.json())
+      .then((data: any[]) => {
+        setRecentRequests(data.slice(0, 10));
+        setStats(prev => ({ ...prev, pending: data.length }));
+      })
+      .catch(() => {});
+
+    // Fetch packages count for stats
+    fetch("http://localhost:5000/api/client/packages")
+      .then(r => r.json())
+      .then((data: any[]) => {
+        setStats(prev => ({ ...prev, total: data.length }));
+      })
+      .catch(() => {});
   }, []);
 
   const handleRequestOtp = async () => {
+    if (!phone) {
+      toast.error('Enter your registered admin phone number');
+      return;
+    }
     setSubmitLoading(true);
     try {
       const res = await fetch('http://localhost:5000/api/auth/request-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: 'admin' })
+        body: JSON.stringify({ phone })
       });
       const data = await res.json();
       if (res.ok) {
@@ -43,7 +63,7 @@ const AdminDashboard = () => {
   };
 
   const handleResetPassword = async () => {
-    if (!otpCode || !newPassword) {
+    if (!phone || !otpCode || !newPassword) {
       toast.error('Please fill in all fields');
       return;
     }
@@ -52,7 +72,7 @@ const AdminDashboard = () => {
       const res = await fetch('http://localhost:5000/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: 'admin', otp: otpCode, newPassword })
+        body: JSON.stringify({ phone, otp: otpCode, newPassword })
       });
       const data = await res.json();
       if (res.ok) {
@@ -60,6 +80,7 @@ const AdminDashboard = () => {
         setResetStep('idle');
         setOtpCode('');
         setNewPassword('');
+        setPhone('');
       } else {
         toast.error(data.error || 'Failed to reset password');
       }
@@ -71,9 +92,9 @@ const AdminDashboard = () => {
   };
 
   const statCards = [
-    { label: "Total Vouchers", value: String(stats.total), icon: Ticket, color: "text-primary" },
-    { label: "Sold", value: String(stats.sold), icon: TrendingUp, color: "text-success" },
-    { label: "Remaining", value: String(stats.remaining), icon: Package, color: "text-accent-foreground" },
+    { label: "Total Packages", value: String(stats.total), icon: Package, color: "text-primary" },
+    { label: "Pending Requests", value: String(stats.pending), icon: Ticket, color: "text-destructive" },
+    { label: "Fulfilled", value: String(stats.fulfilled), icon: TrendingUp, color: "text-success" },
     { label: "Revenue", value: `GH₵ ${stats.revenue}`, icon: DollarSign, color: "text-primary" },
   ];
 
@@ -93,32 +114,34 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      <h3 className="font-heading font-semibold text-foreground mb-3">Recent Sales</h3>
-      <div className="bg-card border rounded-lg overflow-hidden">
+      <h3 className="font-heading font-semibold text-foreground mb-3">Recent Voucher Requests</h3>
+      <div className="bg-card border rounded-lg overflow-hidden mb-8">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Phone</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Amount</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Reference</th>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Date</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Package</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
               </tr>
             </thead>
             <tbody>
-              {recentSales.length === 0 ? (
+              {recentRequests.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
-                    No sales yet. Upload vouchers and make your first sale!
+                  <td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">
+                    No requests yet.
                   </td>
                 </tr>
               ) : (
-                recentSales.map((sale) => (
-                  <tr key={sale.id} className="border-b last:border-0">
-                    <td className="px-4 py-3 font-mono text-foreground">{sale.phone}</td>
-                    <td className="px-4 py-3 text-foreground">GH₵ {sale.amount}</td>
-                    <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{sale.paystack_reference}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{new Date(sale.created_at).toLocaleString()}</td>
+                recentRequests.map((req: any) => (
+                  <tr key={req.id} className="border-b last:border-0">
+                    <td className="px-4 py-3 font-mono text-foreground">{req.client_phone}</td>
+                    <td className="px-4 py-3 text-foreground">{req.Package?.name || '-'}</td>
+                    <td className="px-4 py-3">
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-warning/10 text-warning">
+                        {req.status}
+                      </span>
+                    </td>
                   </tr>
                 ))
               )}
@@ -132,14 +155,24 @@ const AdminDashboard = () => {
       </h3>
       <div className="bg-card border rounded-lg p-5 mb-8">
         <p className="text-sm text-muted-foreground mb-4">
-          Update your admin dashboard password securely. We will send a 6-digit confirmation OTP to your registered phone number via Arkesel.
+          Reset your admin password securely. Enter your registered phone number to receive a 6-digit OTP via SMS.
         </p>
-        
+
         {resetStep === 'idle' && (
-           <Button onClick={handleRequestOtp} disabled={submitLoading} variant="outline">
-             <Smartphone className="w-4 h-4 mr-2" />
-             {submitLoading ? "Requesting..." : "Request Reset OTP"}
-           </Button>
+          <div className="space-y-3 max-w-sm">
+            <div>
+              <label className="text-xs font-medium block mb-1">Registered Phone Number</label>
+              <Input
+                placeholder="e.g. 0550000000"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+              />
+            </div>
+            <Button onClick={handleRequestOtp} disabled={submitLoading} variant="outline">
+              <Smartphone className="w-4 h-4 mr-2" />
+              {submitLoading ? "Requesting..." : "Request Reset OTP"}
+            </Button>
+          </div>
         )}
 
         {resetStep === 'otp' && (

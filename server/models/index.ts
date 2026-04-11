@@ -46,6 +46,13 @@ Voucher.belongsTo(VoucherRequest, { foreignKey: 'request_id' });
 Package.hasMany(Voucher, { foreignKey: 'package_id' });
 Voucher.belongsTo(Package, { foreignKey: 'package_id' });
 
+export const AuditLog = sequelize.define('AuditLog', {
+  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+  admin_username: { type: DataTypes.STRING, allowNull: false },
+  action_type: { type: DataTypes.STRING, allowNull: false },
+  description: { type: DataTypes.TEXT, allowNull: false }
+});
+
 export const initDb = async () => {
   try {
     await sequelize.sync({ alter: true });

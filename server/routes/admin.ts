@@ -1,10 +1,25 @@
 import express, { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import { Package, VoucherRequest, Voucher, Admin } from '../models/index.js';
+import { Package, VoucherRequest, Voucher, Admin, AuditLog } from '../models/index.js';
 import { sendVoucherSms } from '../services/sms.js';
 import { verifyAuth } from './auth.js';
 
 const router = express.Router();
+
+router.use(verifyAuth);
+
+const createAuditLog = async (req: Request, type: string, description: string) => {
+  try {
+    const adminUser = (req as any).user?.username || 'Unknown';
+    await AuditLog.create({
+      admin_username: adminUser,
+      action_type: type,
+      description
+    });
+  } catch (e) {
+    console.error("Failed to append audit log", e);
+  }
+};
 
 router.use(verifyAuth);
 
@@ -58,6 +73,7 @@ router.post('/generate', async (req: Request, res: Response) => {
     }
 
     res.json({ message: 'Voucher generated successfully.', voucher });
+    await createAuditLog(req, 'GENERATE_VOUCHER', `Automated generation for Code '${code}' to Request ID #${requestId} mapping Phone ${vr.client_phone}`);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error generating voucher' });
@@ -66,7 +82,8 @@ router.post('/generate', async (req: Request, res: Response) => {
 
 router.post('/packages', async (req: Request, res: Response) => {
   try {
-    const pkg = await Package.create(req.body);
+    const pkg: any = await Package.create(req.body);
+    await createAuditLog(req, 'CREATE_PACKAGE', `Drafted new WiFi Package '${pkg.name}'`);
     res.json(pkg);
   } catch (error) {
     res.status(500).json({ error: 'Failed to create package' });
@@ -81,6 +98,7 @@ router.put('/packages/:id', async (req: Request, res: Response) => {
       return;
     }
     await pkg.update(req.body);
+    await createAuditLog(req, 'UPDATE_PACKAGE', `Updated fields inside Package '${pkg.name}'`);
     res.json(pkg);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update package' });
@@ -96,6 +114,7 @@ router.patch('/packages/:id/toggle', async (req: Request, res: Response) => {
     }
     pkg.active = !pkg.active;
     await pkg.save();
+    await createAuditLog(req, 'TOGGLE_PACKAGE', `Toggled Package '${pkg.name}' state to ${pkg.active ? 'ACTIVE' : 'INACTIVE'}`);
     res.json(pkg);
   } catch (error) {
     res.status(500).json({ error: 'Failed to toggle package state' });
@@ -124,9 +143,21 @@ router.post('/staff', async (req: Request, res: Response) => {
       phone,
       password: hp
     });
+    await createAuditLog(req, 'CREATE_STAFF', `A new administrative staff access was created successfully under '${username}' targeting Email / Phone.`);
     res.json(newAdmin);
   } catch (error: any) {
     res.status(500).json({ error: error?.message || 'Failed to construct Admin account' });
+  }
+});
+
+router.get('/logs', async (req: Request, res: Response) => {
+  try {
+    const logs = await AuditLog.findAll({
+      order: [['createdAt', 'DESC']]
+    });
+    res.json(logs);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to retrieve Audit feeds' });
   }
 });
 

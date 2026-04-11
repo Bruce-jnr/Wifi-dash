@@ -1,14 +1,21 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import PackageCard from "@/components/PackageCard";
-import { type Package } from "@/lib/types";
-import { getPackages } from "@/lib/db";
 import { Wifi, Shield, Smartphone } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
+  const [packages, setPackages] = useState<any[]>([]);
 
-  const handleBuy = (pkg: Package) => {
+  useEffect(() => {
+    fetch("http://localhost:5000/api/client/packages")
+      .then(r => r.json())
+      .then(data => setPackages(data))
+      .catch(() => {});
+  }, []);
+
+  const handleBuy = (pkg: any) => {
     navigate(`/checkout/${pkg.id}`);
   };
 
@@ -55,7 +62,7 @@ const Index = () => {
         <div className="max-w-lg mx-auto">
           <h3 className="font-heading font-bold text-xl text-foreground mb-4">Choose a Package</h3>
           <div className="flex flex-col gap-4">
-            {getPackages().filter(p => p.active).map((pkg) => (
+            {packages.filter((p: any) => p.active).map((pkg: any) => (
               <PackageCard key={pkg.id} pkg={pkg} onBuy={handleBuy} />
             ))}
           </div>
@@ -64,14 +71,8 @@ const Index = () => {
 
       {/* Footer */}
       <footer className="border-t py-6 text-center text-sm text-muted-foreground">
-        <p>© 2026 ASUOGYA WIFI. All rights reserved.</p>
+        <p>© <span className="copyright-year">2026</span> ASUOGYA WIFI. All rights reserved.</p>
         <p className="mt-1">Connect to <strong>ASUOGYA WIFI</strong> • Login at 192.168.88.1</p>
-        <button
-          onClick={() => navigate("/admin")}
-          className="mt-3 text-xs text-muted-foreground/50 hover:text-primary transition-colors"
-        >
-          Admin
-        </button>
       </footer>
     </div>
   );

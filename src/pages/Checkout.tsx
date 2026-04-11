@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getPackageById } from "@/lib/db";
 import { ArrowLeft, Phone, CreditCard, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -12,13 +11,20 @@ const Checkout = () => {
   const navigate = useNavigate();
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pkg, setPkg] = useState<any>(null);
 
-  const pkg = getPackageById(packageId || "");
+  useEffect(() => {
+    fetch("http://localhost:5000/api/client/packages")
+      .then(r => r.json())
+      .then((data: any[]) => {
+        const found = data.find((p: any) => String(p.id) === String(packageId));
+        if (!found) { navigate("/"); return; }
+        setPkg(found);
+      })
+      .catch(() => navigate("/"));
+  }, [packageId]);
 
-  if (!pkg) {
-    navigate("/");
-    return null;
-  }
+  if (!pkg) return null;
 
   const isValidPhone = /^0[235]\d{8}$/.test(phone);
 
@@ -75,11 +81,11 @@ const Checkout = () => {
           </div>
           <div className="flex justify-between text-sm mb-2">
             <span className="text-muted-foreground">Validity</span>
-            <span className="text-foreground">{pkg.validity}</span>
+            <span className="text-foreground">{pkg.duration}</span>
           </div>
           <div className="flex justify-between text-sm mb-2">
-            <span className="text-muted-foreground">Speed</span>
-            <span className="text-foreground">{pkg.speed}</span>
+            <span className="text-muted-foreground">Data Limit</span>
+            <span className="text-foreground">{pkg.data_limit}</span>
           </div>
           <hr className="my-3" />
           <div className="flex justify-between">

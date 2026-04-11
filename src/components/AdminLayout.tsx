@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Wifi, LayoutDashboard, Package, Ticket, LogOut, Menu, X, Users } from "lucide-react";
+import { Wifi, LayoutDashboard, Package, Ticket, LogOut, Menu, X, Users, ClipboardList } from "lucide-react";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -12,7 +12,8 @@ const navItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/admin/dashboard" },
   { id: "packages", label: "Packages", icon: Package, path: "/admin/packages" },
   { id: "vouchers", label: "Vouchers", icon: Ticket, path: "/admin/vouchers" },
-  { id: "staff", label: "Staff", icon: Users, path: "/admin/staff" }
+  { id: "staff", label: "Staff", icon: Users, path: "/admin/staff" },
+  { id: "logs", label: "Audit Logs", icon: ClipboardList, path: "/admin/logs" }
 ];
 
 const AdminLayout = ({ children, activeTab }: AdminLayoutProps) => {
@@ -20,7 +21,7 @@ const AdminLayout = ({ children, activeTab }: AdminLayoutProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const handleLogout = () => {
-    localStorage.removeItem("admin_demo");
+    localStorage.removeItem("admin_token");
     navigate("/admin");
   };
 

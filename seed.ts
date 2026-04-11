@@ -4,18 +4,18 @@ import { Package, Admin, initDb } from './server/models/index.js';
 const seed = async () => {
   await initDb();
   
-  const pkgCount = await Package.count();
-  if (pkgCount === 0) {
-    console.log('Seeding packages...');
-    await Package.bulkCreate([
-      { id: 1, name: 'Daily Pass', data_limit: '1GB', duration: '24 hours', price: 5.00 },
-      { id: 2, name: 'Weekly Pass', data_limit: '5GB', duration: '7 days', price: 20.00 },
-      { id: 3, name: 'Monthly Unlimited', data_limit: 'Unlimited', duration: '30 days', price: 100.00 }
-    ]);
-    console.log('Packages seeded successfully!');
-  } else {
-    console.log('Packages already seeded.');
+  // Upsert packages (update if exists, create if not)
+  console.log('Upserting packages...');
+  const packages = [
+    { id: 1, name: '2-Hour Pass',  data_limit: 'Unlimited', duration: '2 hours',  price: 2.00,  active: true },
+    { id: 2, name: '10-Hour Pass', data_limit: 'Unlimited', duration: '10 hours', price: 5.00,  active: true },
+    { id: 3, name: '40-Hour Pass', data_limit: 'Unlimited', duration: '40 hours', price: 10.00, active: true }
+  ];
+  for (const pkg of packages) {
+    const [record, created] = await (Package as any).findOrCreate({ where: { id: pkg.id }, defaults: pkg });
+    if (!created) await record.update(pkg);
   }
+  console.log('Packages seeded successfully!');
 
   const adminCount = await Admin.count();
   if (adminCount === 0) {
