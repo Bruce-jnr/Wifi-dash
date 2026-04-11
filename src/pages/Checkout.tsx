@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { mockPackages } from "@/lib/types";
+import { getPackageById } from "@/lib/db";
 import { ArrowLeft, Phone, CreditCard, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -13,7 +13,7 @@ const Checkout = () => {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const pkg = mockPackages.find((p) => p.id === packageId);
+  const pkg = getPackageById(packageId || "");
 
   if (!pkg) {
     navigate("/");
@@ -28,11 +28,32 @@ const Checkout = () => {
       return;
     }
     setLoading(true);
-    // TODO: Integrate Paystack
-    toast.info("Paystack integration pending — redirecting to success page for demo");
+
+    // Simulate payment + voucher claim
+    const { claimVoucher, addTransaction } = await import("@/lib/db");
+    const voucher = claimVoucher(pkg.id, phone);
+
+    if (!voucher) {
+      setLoading(false);
+      toast.error("No vouchers available for this package. Please try again later.");
+      return;
+    }
+
+    const ref = "PAY-" + Date.now();
+    addTransaction({
+      id: String(Date.now()),
+      phone,
+      paystack_reference: ref,
+      amount: pkg.price,
+      status: "success",
+      voucher_id: voucher.id,
+      created_at: new Date().toISOString(),
+    });
+
+    toast.success("Payment successful!");
     setTimeout(() => {
-      navigate("/payment/success?ref=demo123");
-    }, 1500);
+      navigate(`/payment/success?ref=${ref}&code=${voucher.code}`);
+    }, 1000);
   };
 
   return (
