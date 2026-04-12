@@ -68,10 +68,15 @@ router.post('/vouchers/upload', upload.single('file'), async (req: Request, res:
     if (!pkg) { res.status(404).json({ error: 'Package not found' }); return; }
 
     const text = req.file.buffer.toString('utf8');
-    const codes = text
+    let codes = text
       .split(/\r?\n/)
       .map(l => l.trim())
       .filter(l => l.length > 0);
+
+    // Skip header if present
+    if (codes.length > 0 && (codes[0].toLowerCase() === 'code' || codes[0].toLowerCase() === 'voucher')) {
+      codes = codes.slice(1);
+    }
 
     if (codes.length === 0) {
       res.status(400).json({ error: 'CSV file is empty or has no valid codes' });
