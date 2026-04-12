@@ -42,14 +42,17 @@ const Checkout = () => {
         body: JSON.stringify({ phone, packageId: pkg.id })
       });
       
-      if (!res.ok) {
-        throw new Error('Failed to submit request');
+      const data = await res.json();
+      
+      if (data.authorization_url) {
+        toast.info("Redirecting to Paystack...");
+        window.location.href = data.authorization_url;
+      } else {
+        toast.success("Request received! An admin will process your voucher shortly via SMS.");
+        setTimeout(() => {
+          navigate('/');
+        }, 1500);
       }
-
-      toast.success("Request received! An admin will process your voucher shortly via SMS.");
-      setTimeout(() => {
-        navigate('/');
-      }, 1500);
 
     } catch (error) {
       toast.error("Network Error: Could not reach the backend.");

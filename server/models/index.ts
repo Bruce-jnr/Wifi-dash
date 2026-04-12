@@ -31,18 +31,17 @@ export const VoucherRequest = sequelize.define('VoucherRequest', {
 export const Voucher = sequelize.define('Voucher', {
   id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
   code: { type: DataTypes.STRING, unique: true, allowNull: false },
-  request_id: { type: DataTypes.INTEGER, allowNull: false },
+  request_id: { type: DataTypes.INTEGER, allowNull: true },
   package_id: { type: DataTypes.INTEGER, allowNull: false },
-  status: { type: DataTypes.ENUM('active', 'used'), defaultValue: 'active' }
+  status: { type: DataTypes.ENUM('available', 'issued'), defaultValue: 'available' }
 });
 
 // Relationships
 Package.hasMany(VoucherRequest, { foreignKey: 'package_id' });
 VoucherRequest.belongsTo(Package, { foreignKey: 'package_id' });
 
-VoucherRequest.hasOne(Voucher, { foreignKey: 'request_id' });
-Voucher.belongsTo(VoucherRequest, { foreignKey: 'request_id' });
-
+// Note: Voucher.request_id is a soft reference — no FK managed by Sequelize
+// This avoids MySQL conflicts when request_id is nullable.
 Package.hasMany(Voucher, { foreignKey: 'package_id' });
 Voucher.belongsTo(Package, { foreignKey: 'package_id' });
 
@@ -55,7 +54,7 @@ export const AuditLog = sequelize.define('AuditLog', {
 
 export const initDb = async () => {
   try {
-    await sequelize.sync({ alter: true });
+    await sequelize.sync();
     console.log('Database models synchronized successfully!');
   } catch (err) {
     console.error('Failed to sync database models:', err);

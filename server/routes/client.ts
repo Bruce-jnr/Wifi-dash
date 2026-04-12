@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import { Package, VoucherRequest } from '../models/index.js';
+import { initializeTransaction } from '../services/paystack.js';
 
 const router = express.Router();
 
@@ -18,18 +19,35 @@ router.post('/request', async (req: Request, res: Response) => {
     res.status(400).json({ error: 'Phone and package ID are required' });
     return;
   }
-  
   try {
-    const voucherRequest = await (VoucherRequest as any).create({
+    const pkg: any = await Package.findByPk(Number(packageId));
+    if (!pkg) {
+      res.status(404).json({ error: 'Package not found' });
+      return;
+    }
+
+    const voucherRequest: any = await (VoucherRequest as any).create({
       client_phone: phone,
       package_id: packageId,
       status: 'pending',
       payment_status: 'pending'
     });
-    
-    res.json({ message: 'Request created successfully', request: voucherRequest });
-  } catch (error) {
-    res.status(500).json({ error: 'Error processing request' });
+
+    const email = `${phone}@customer.com`;
+    const callbackUrl = `${req.protocol}://${req.get('host')}/payment/success`;
+    const paystackData = await initializeTransaction(email, pkg.price, {
+      requestId: voucherRequest.id,
+      phone: phone
+    }, callbackUrl);
+
+    res.json({
+      message: 'Payment initialized',
+      authorization_url: paystackData.authorization_url,
+      reference: paystackData.reference
+    });
+  } catch (error: any) {
+    console.error('Request Error:', error);
+    res.status(500).json({ error: error.message || 'Error processing request' });
   }
 });
 

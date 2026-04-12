@@ -72,7 +72,7 @@ const Index = () => {
       {/* Footer */}
       <footer className="border-t py-6 text-center text-sm text-muted-foreground">
         <p>© <span className="copyright-year">2026</span> ASUOGYA WIFI. All rights reserved.</p>
-        <p className="mt-1">Connect to <strong>ASUOGYA WIFI</strong> • Login at 192.168.88.1</p>
+        <p className="mt-1">Connect to <strong>ASUOGYA WIFI</strong></p>
       </footer>
     </div>
   );
