@@ -32,6 +32,7 @@ const AdminVouchers = () => {
   const [requestsLoading, setRequestsLoading] = useState(true);
   const [manualCode, setManualCode] = useState("");
   const [manualLoading, setManualLoading] = useState(false);
+  const [manualPkgId, setManualPkgId] = useState<string>("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const token = localStorage.getItem("admin_token");
@@ -50,7 +51,10 @@ const AdminVouchers = () => {
       if (pkgRes.ok) {
         const pkgs = await pkgRes.json();
         setPackages(pkgs);
-        if (pkgs.length > 0 && !selectedPkgId) setSelectedPkgId(String(pkgs[0].id));
+        if (pkgs.length > 0) {
+          if (!selectedPkgId) setSelectedPkgId(String(pkgs[0].id));
+          if (!manualPkgId) setManualPkgId(String(pkgs[0].id));
+        }
       }
     } catch {
       toast.error("Failed to load data");
@@ -103,7 +107,7 @@ const AdminVouchers = () => {
       const res = await fetch("http://localhost:5000/api/admin/vouchers/manual", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ code: manualCode.trim(), package_id: selectedPkgId }),
+        body: JSON.stringify({ code: manualCode.trim(), package_id: manualPkgId }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -182,6 +186,20 @@ const AdminVouchers = () => {
         <h2 className="font-heading text-xl font-bold text-foreground mb-4">Add Single Voucher</h2>
         <div className="bg-card border rounded-lg p-5">
            <div className="flex flex-col sm:flex-row gap-3 items-end">
+             <div className="w-full sm:w-1/3">
+               <label className="text-xs font-medium text-muted-foreground mb-1 block">Package</label>
+               <select
+                 value={manualPkgId}
+                 onChange={(e) => setManualPkgId(e.target.value)}
+                 className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+               >
+                 {packages.map((p: any) => (
+                   <option key={p.id} value={p.id}>
+                     {p.name}
+                   </option>
+                 ))}
+               </select>
+             </div>
              <div className="flex-1 w-full">
                <label className="text-xs font-medium text-muted-foreground mb-1 block">Voucher Code</label>
                <input
