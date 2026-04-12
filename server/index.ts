@@ -36,7 +36,18 @@ app.use((req: Request, res: Response) => {
 });
 
 initDb().then(() => {
-  app.listen(PORT, () => {
+  console.log('Database initialized. Starting server...');
+  const server = app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
   });
+
+  server.on('error', (err) => {
+    console.error('Server error:', err);
+  });
+
+  server.on('close', () => {
+    console.log('Server closed');
+  });
+}).catch(err => {
+  console.error('Failed to initialize database:', err);
 });

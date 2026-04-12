@@ -42,9 +42,9 @@ const AdminVouchers = () => {
     setRequestsLoading(true);
     try {
       const [reqRes, poolRes, pkgRes] = await Promise.all([
-        fetch("http://localhost:5000/api/admin/requests", { headers }),
-        fetch("http://localhost:5000/api/admin/vouchers", { headers }),
-        fetch("http://localhost:5000/api/client/packages"),
+        fetch("/api/admin/requests", { headers }),
+        fetch("/api/admin/vouchers", { headers }),
+        fetch("/api/client/packages"),
       ]);
       if (reqRes.ok) setRequests(await reqRes.json());
       if (poolRes.ok) setPool(await poolRes.json());
@@ -77,7 +77,7 @@ const AdminVouchers = () => {
 
     setUploadLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/vouchers/upload", {
+      const res = await fetch("/api/admin/vouchers/upload", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -104,7 +104,7 @@ const AdminVouchers = () => {
     }
     setManualLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/vouchers/manual", {
+      const res = await fetch("/api/admin/vouchers/manual", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ code: manualCode.trim(), package_id: manualPkgId }),
@@ -127,7 +127,7 @@ const AdminVouchers = () => {
   const handleIssue = async (requestId: number, pkgName: string) => {
     setIssueLoading(requestId);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/generate", {
+      const res = await fetch("/api/admin/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ requestId }),

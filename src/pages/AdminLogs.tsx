@@ -9,7 +9,7 @@ export default function AdminLogs() {
     const fetchLogs = async () => {
       try {
         const token = localStorage.getItem("admin_token");
-        const res = await fetch("http://localhost:5000/api/admin/logs", {
+        const res = await fetch("/api/admin/logs", {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (res.ok) {

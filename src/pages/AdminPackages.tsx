@@ -14,7 +14,7 @@ const AdminPackages = () => {
 
   const fetchPackages = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/client/packages");
+      const res = await fetch("/api/client/packages");
       if (res.ok) {
         const data = await res.json();
         setPackages(data);
@@ -30,7 +30,7 @@ const AdminPackages = () => {
 
   const handleToggle = async (id: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/packages/${id}/toggle`, {
+      const res = await fetch(`/api/admin/packages/${id}/toggle`, {
         method: "PATCH",
         headers: { "Authorization": `Bearer ${token}` }
       });
@@ -51,7 +51,7 @@ const AdminPackages = () => {
       return;
     }
     try {
-      const url = form.id ? `http://localhost:5000/api/admin/packages/${form.id}` : `http://localhost:5000/api/admin/packages`;
+      const url = form.id ? `/api/admin/packages/${form.id}` : `/api/admin/packages`;
       const method = form.id ? "PUT" : "POST";
       const payload = {
         name: form.name,

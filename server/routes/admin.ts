@@ -143,6 +143,34 @@ router.post('/vouchers/manual', async (req: Request, res: Response) => {
   }
 });
 
+router.get('/stats', async (req: Request, res: Response) => {
+  try {
+    const totalPackages = await Package.count();
+    const pendingRequests = await VoucherRequest.count({ where: { status: 'pending' } });
+    const fulfilledRequests = await VoucherRequest.count({ where: { status: 'fulfilled' } });
+    
+    // Calculate total revenue from fulfilled requests
+    const paidRequests: any[] = await VoucherRequest.findAll({
+      where: { status: 'fulfilled' },
+      include: [Package]
+    }) as any[];
+    
+    const revenue = paidRequests.reduce((sum, req) => sum + Number(req.Package?.price || 0), 0);
+
+    const result = {
+      totalPackages,
+      pendingRequests,
+      fulfilledRequests,
+      revenue
+    };
+    console.log('Stats being sent to client:', result);
+    res.json(result);
+  } catch (error) {
+    console.error('Stats Error:', error);
+    res.status(500).json({ error: 'Failed to fetch dashboard stats' });
+  }
+});
+
 // ─── Packages CRUD ─────────────────────────────────────────────────────────────
 
 router.post('/packages', async (req: Request, res: Response) => {

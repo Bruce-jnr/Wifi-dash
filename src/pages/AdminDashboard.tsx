@@ -18,20 +18,31 @@ const AdminDashboard = () => {
     const token = localStorage.getItem("admin_token");
     const headers = { "Authorization": `Bearer ${token}` };
 
-    // Fetch pending voucher requests for stats
-    fetch("http://localhost:5000/api/admin/requests", { headers })
+    // Fetch live dashboard stats
+    fetch("/api/admin/stats", { headers })
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
+        return r.json();
+      })
+      .then((data) => {
+        console.log('Dashboard stats received:', data);
+        setStats({
+          total: data.totalPackages,
+          pending: data.pendingRequests,
+          fulfilled: data.fulfilledRequests,
+          revenue: data.revenue
+        });
+      })
+      .catch((err) => {
+        console.error('Failed to fetch stats:', err);
+        toast.error('Failed to load dashboard metrics');
+      });
+
+    // Fetch recent pending requests for the table
+    fetch("/api/admin/requests", { headers })
       .then(r => r.json())
       .then((data: any[]) => {
         setRecentRequests(data.slice(0, 10));
-        setStats(prev => ({ ...prev, pending: data.length }));
-      })
-      .catch(() => {});
-
-    // Fetch packages count for stats
-    fetch("http://localhost:5000/api/client/packages")
-      .then(r => r.json())
-      .then((data: any[]) => {
-        setStats(prev => ({ ...prev, total: data.length }));
       })
       .catch(() => {});
   }, []);

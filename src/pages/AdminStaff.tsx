@@ -13,7 +13,7 @@ export default function AdminStaff() {
 
   const fetchStaff = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/admin/staff");
+      const res = await fetch("/api/admin/staff");
       if (res.ok) {
         const data = await res.json();
         setStaff(data);
@@ -34,7 +34,7 @@ export default function AdminStaff() {
     }
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/staff", {
+      const res = await fetch("/api/admin/staff", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form)
