@@ -3,12 +3,26 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { Admin } from '../models/index.js';
 import { sendVoucherSms } from '../services/sms.js';
+import crypto from 'crypto';
+import { rateLimit } from 'express-rate-limit';
 
 const router = express.Router();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET is not defined in environment variables');
+}
 
-router.post('/login', async (req: Request, res: Response) => {
+// Stricter rate limiting for auth endpoints: 5 attempts per 15 minutes
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { error: 'Too many attempts. Please try again after 15 minutes.' }
+});
+
+router.post('/login', authLimiter, async (req: Request, res: Response) => {
   const { username, password } = req.body;
   
   try {
@@ -40,7 +54,7 @@ router.post('/request-otp', async (req: Request, res: Response) => {
       return;
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = crypto.randomInt(100000, 999999).toString();
     admin.otp_code = otp;
     admin.otp_expires = new Date(Date.now() + 10 * 60000); // Expiry in 10 minutes
     await admin.save();

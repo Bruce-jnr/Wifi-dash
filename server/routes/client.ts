@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { Package, VoucherRequest } from '../models/index.js';
 import { initializeTransaction } from '../services/paystack.js';
+import { rateLimit } from 'express-rate-limit';
 
 const router = express.Router();
 
@@ -13,7 +14,16 @@ router.get('/packages', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/request', async (req: Request, res: Response) => {
+// Rate limit for payment requests: 3 per 15 minutes per IP
+const requestLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 3,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { error: 'Too many requests. Please try again later.' }
+});
+
+router.post('/request', requestLimiter, async (req: Request, res: Response) => {
   const { phone, packageId } = req.body;
   if (!phone || !packageId) {
     res.status(400).json({ error: 'Phone and package ID are required' });
