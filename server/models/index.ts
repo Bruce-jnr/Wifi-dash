@@ -59,5 +59,6 @@ export const initDb = async () => {
     console.log('Database models synchronized successfully!');
   } catch (err) {
     console.error('Failed to sync database models:', err);
+    throw err;
   }
 };
