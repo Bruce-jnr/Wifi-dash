@@ -34,7 +34,7 @@ const AdminLayout = ({ children, activeTab }: AdminLayoutProps) => {
             <div className="bg-primary rounded-lg p-1.5">
               <Wifi className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-heading font-bold text-sm text-foreground">ASUOGYA Admin</span>
+            <span className="font-heading font-bold text-sm text-foreground">JOEMENS Admin</span>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMenuOpen(!menuOpen)}>

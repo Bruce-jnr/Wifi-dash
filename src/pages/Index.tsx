@@ -1,78 +1,55 @@
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
-import PackageCard from "@/components/PackageCard";
-import { Wifi, Shield, Smartphone } from "lucide-react";
+import { Building2, GraduationCap } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [packages, setPackages] = useState<any[]>([]);
-
-  useEffect(() => {
-    fetch("http://localhost:5000/api/client/packages")
-      .then(r => r.json())
-      .then(data => setPackages(data))
-      .catch(() => {});
-  }, []);
-
-  const handleBuy = (pkg: any) => {
-    navigate(`/checkout/${pkg.id}`);
-  };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
 
-      {/* Hero */}
-      <section className="bg-gradient-to-b from-accent to-background py-10 px-4">
-        <div className="container text-center max-w-lg mx-auto">
-          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary font-semibold px-4 py-1.5 rounded-full text-sm mb-4">
-            <Wifi className="h-4 w-4" />
-            High-Speed Internet
+      <main className="flex-1 flex flex-col items-center justify-center p-4">
+        <div className="max-w-md w-full text-center space-y-8">
+          <div className="space-y-3">
+            <h1 className="text-4xl font-extrabold tracking-tight">Select Your Network</h1>
+            <p className="text-muted-foreground text-lg">
+              Choose your community to view available WiFi packages.
+            </p>
           </div>
-          <h2 className="font-heading text-3xl font-bold text-foreground mb-2">
-            Get Online Instantly
-          </h2>
-          <p className="text-muted-foreground">
-            Purchase a WiFi voucher and connect in seconds. No registration needed — just your phone number.
-          </p>
-        </div>
-      </section>
 
-      {/* Features */}
-      <section className="container py-6">
-        <div className="grid grid-cols-3 gap-3 max-w-lg mx-auto">
-          {[
-            { icon: Smartphone, label: "Mobile Money" },
-            { icon: Shield, label: "Secure Payment" },
-            { icon: Wifi, label: "Instant Access" },
-          ].map(({ icon: Icon, label }) => (
-            <div key={label} className="flex flex-col items-center gap-1.5 text-center">
-              <div className="bg-accent rounded-full p-2.5">
-                <Icon className="h-4 w-4 text-accent-foreground" />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <button
+              onClick={() => navigate('/town')}
+              className="flex flex-col items-center justify-center gap-4 p-8 rounded-2xl border-2 border-border bg-card hover:border-primary hover:bg-accent/50 transition-all duration-200 group"
+            >
+              <div className="p-4 rounded-full bg-primary/10 text-primary group-hover:scale-110 transition-transform">
+                <Building2 className="w-10 h-10" />
               </div>
-              <span className="text-xs font-medium text-muted-foreground">{label}</span>
-            </div>
-          ))}
-        </div>
-      </section>
+              <div className="space-y-1">
+                <h3 className="font-bold text-xl">Town Network</h3>
+                <p className="text-sm text-muted-foreground">For local residents</p>
+              </div>
+            </button>
 
-      {/* Packages */}
-      <section className="container pb-10">
-        <div className="max-w-lg mx-auto">
-          <h3 className="font-heading font-bold text-xl text-foreground mb-4">Choose a Package</h3>
-          <div className="flex flex-col gap-4">
-            {packages.filter((p: any) => p.active).map((pkg: any) => (
-              <PackageCard key={pkg.id} pkg={pkg} onBuy={handleBuy} />
-            ))}
+            <button
+              onClick={() => navigate('/school')}
+              className="flex flex-col items-center justify-center gap-4 p-8 rounded-2xl border-2 border-border bg-card hover:border-primary hover:bg-accent/50 transition-all duration-200 group"
+            >
+              <div className="p-4 rounded-full bg-primary/10 text-primary group-hover:scale-110 transition-transform">
+                <GraduationCap className="w-10 h-10" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-bold text-xl">School Network</h3>
+                <p className="text-sm text-muted-foreground">For students & staff</p>
+              </div>
+            </button>
           </div>
         </div>
-      </section>
+      </main>
 
-      {/* Footer */}
       <footer className="border-t py-6 text-center text-sm text-muted-foreground">
-        <p>© <span className="copyright-year">2026</span> ASUOGYA WIFI. All rights reserved.</p>
-        <p className="mt-1">Connect to <strong>ASUOGYA WIFI</strong></p>
+        <p>© 2026 JOEMENS WIFI. All rights reserved.</p>
       </footer>
     </div>
   );

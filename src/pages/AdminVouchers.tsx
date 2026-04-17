@@ -10,7 +10,7 @@ interface RequestRow {
   package_id: number;
   status: string;
   createdAt: string;
-  Package: { name: string; price: number };
+  Package: { name: string; price: number; community?: string };
 }
 
 interface PoolStat {
@@ -20,6 +20,7 @@ interface PoolStat {
   price: number;
   available: number;
   issued: number;
+  community?: string;
 }
 
 const AdminVouchers = () => {
@@ -163,7 +164,7 @@ const AdminVouchers = () => {
             >
               {packages.map((p: any) => (
                 <option key={p.id} value={p.id}>
-                  {p.name} — GH₵ {p.price} ({p.duration})
+                  {p.name} [{p.community || 'town'}] — GH₵ {p.price} ({p.duration})
                 </option>
               ))}
             </select>
@@ -195,7 +196,7 @@ const AdminVouchers = () => {
                >
                  {packages.map((p: any) => (
                    <option key={p.id} value={p.id}>
-                     {p.name}
+                     {p.name} [{p.community || 'town'}]
                    </option>
                  ))}
                </select>
@@ -232,7 +233,10 @@ const AdminVouchers = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {pool.map((p) => (
             <div key={p.id} className="bg-card border rounded-lg p-4">
-              <p className="font-heading font-bold text-foreground">{p.name}</p>
+              <div className="flex justify-between items-start mb-1">
+                <p className="font-heading font-bold text-foreground">{p.name}</p>
+                <span className="text-[10px] uppercase font-bold bg-muted px-2 py-0.5 rounded text-muted-foreground">{p.community || 'town'}</span>
+              </div>
               <p className="text-xs text-muted-foreground mb-3">{p.duration} • GH₵ {p.price}</p>
               <div className="flex gap-4 text-sm">
                 <div>
@@ -277,7 +281,9 @@ const AdminVouchers = () => {
                     <tr key={r.id} className="border-b last:border-0">
                       <td className="px-4 py-3 font-mono font-medium text-foreground">#{r.id}</td>
                       <td className="px-4 py-3 text-foreground font-mono">{r.client_phone}</td>
-                      <td className="px-4 py-3 font-medium text-foreground">{r.Package?.name}</td>
+                      <td className="px-4 py-3 font-medium text-foreground">
+                        {r.Package?.name} <span className="text-[10px] uppercase bg-muted px-1.5 py-0.5 rounded ml-1 tracking-wider text-muted-foreground">{r.Package?.community || 'town'}</span>
+                      </td>
                       <td className="px-4 py-3 text-primary font-bold">GH₵ {r.Package?.price}</td>
                       <td className="px-4 py-3 text-muted-foreground text-xs">{new Date(r.createdAt).toLocaleString()}</td>
                       <td className="px-4 py-3">

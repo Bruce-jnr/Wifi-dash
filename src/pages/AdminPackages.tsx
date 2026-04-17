@@ -8,7 +8,7 @@ import { toast } from "sonner";
 const AdminPackages = () => {
   const [packages, setPackages] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ id: "", name: "", price: "", data_limit: "", validity: "" });
+  const [form, setForm] = useState({ id: "", name: "", price: "", data_limit: "", validity: "", community: "town" });
 
   const token = localStorage.getItem("admin_token");
 
@@ -57,7 +57,8 @@ const AdminPackages = () => {
         name: form.name,
         price: Number(form.price),
         data_limit: form.data_limit || "Unlimited",
-        duration: form.validity || "1 day"
+        duration: form.validity || "1 day",
+        community: form.community || "town"
       };
 
       const res = await fetch(url, {
@@ -69,7 +70,7 @@ const AdminPackages = () => {
       if (res.ok) {
         toast.success(form.id ? "Package updated" : "Package added");
         fetchPackages();
-        setForm({ id: "", name: "", price: "", data_limit: "", validity: "" });
+        setForm({ id: "", name: "", price: "", data_limit: "", validity: "", community: "town" });
         setShowForm(false);
       } else {
         toast.error("Failed to save package");
@@ -85,7 +86,8 @@ const AdminPackages = () => {
       name: pkg.name,
       price: pkg.price,
       data_limit: pkg.data_limit,
-      validity: pkg.duration
+      validity: pkg.duration,
+      community: pkg.community || "town"
     });
     setShowForm(true);
   };
@@ -95,7 +97,7 @@ const AdminPackages = () => {
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-heading text-xl font-bold text-foreground">Packages</h2>
         <Button size="sm" onClick={() => {
-          setForm({ id: "", name: "", price: "", data_limit: "", validity: "" });
+          setForm({ id: "", name: "", price: "", data_limit: "", validity: "", community: "town" });
           setShowForm(!showForm);
         }}>
           <Plus className="h-4 w-4 mr-1" />
@@ -109,7 +111,17 @@ const AdminPackages = () => {
           <Input placeholder="Price (GH₵)" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
           <Input placeholder="Data Limit (e.g. 5GB)" value={form.data_limit} onChange={(e) => setForm({ ...form, data_limit: e.target.value })} />
           <Input placeholder="Validity Duration (e.g. 24 hours)" value={form.validity} onChange={(e) => setForm({ ...form, validity: e.target.value })} />
-          <Button onClick={handleSave}>{form.id ? "Update Package" : "Save Package"}</Button>
+          <select 
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            value={form.community} 
+            onChange={(e) => setForm({ ...form, community: e.target.value })}
+          >
+            <option value="town">Town Network</option>
+            <option value="school">School Network</option>
+          </select>
+          <div className="md:col-span-2">
+            <Button onClick={handleSave}>{form.id ? "Update Package" : "Save Package"}</Button>
+          </div>
         </div>
       )}
 
@@ -120,6 +132,7 @@ const AdminPackages = () => {
               <tr className="border-b bg-muted/50">
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Name</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Price</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Community</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Data Limit</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Validity</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
@@ -131,6 +144,7 @@ const AdminPackages = () => {
                 <tr key={pkg.id} className="border-b last:border-0">
                   <td className="px-4 py-3 font-medium text-foreground">{pkg.name}</td>
                   <td className="px-4 py-3 text-foreground">GH₵ {pkg.price}</td>
+                  <td className="px-4 py-3 text-foreground capitalize">{pkg.community}</td>
                   <td className="px-4 py-3 text-foreground">{pkg.data_limit}</td>
                   <td className="px-4 py-3 text-foreground">{pkg.duration}</td>
                   <td className="px-4 py-3">

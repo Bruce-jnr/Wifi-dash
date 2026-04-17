@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const ARKESEL_APIKEY = process.env.ARKSEL_APIKEY;
-const SENDER_ID = process.env.ARKSEL_SENDER_ID || 'Wifi-Dash';
+const SENDER_ID = process.env.ARKSEL_SENDER_ID;
 
 export const sendVoucherSms = async (phone: string, code: string, packageName: string) => {
   try {

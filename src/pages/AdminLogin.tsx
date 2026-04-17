@@ -108,7 +108,7 @@ const AdminLogin = () => {
             <Wifi className="h-7 w-7 text-primary-foreground" />
           </div>
           <h1 className="font-heading text-2xl font-bold text-foreground">Admin Panel</h1>
-          <p className="text-sm text-muted-foreground mt-1">ASUOGYA WIFI Management</p>
+          <p className="text-sm text-muted-foreground mt-1">JOEMENS WIFI Management</p>
         </div>
 
         <form onSubmit={handleLogin} className="bg-card border rounded-lg p-6 space-y-4">

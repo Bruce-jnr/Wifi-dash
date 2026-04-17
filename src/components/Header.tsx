@@ -9,7 +9,7 @@ const Header = () => {
             <Wifi className="h-5 w-5 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="font-heading font-bold text-lg leading-tight text-foreground">ASUOGYA WIFI</h1>
+            <h1 className="font-heading font-bold text-lg leading-tight text-foreground">JOEMENS WIFI</h1>
             <p className="text-xs text-muted-foreground">Fast & Reliable Internet</p>
           </div>
         </div>

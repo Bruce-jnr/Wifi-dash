@@ -81,7 +81,7 @@ const PaymentSuccess = () => {
               </div>
               <div className="bg-muted rounded-md p-4 text-sm font-mono text-foreground">
                 <p>Your WiFi Voucher Code: <strong className="text-primary text-lg">{voucherCode || "XXXX-XXXX-XXXX"}</strong></p>
-                <p className="mt-1">Connect to <strong>ASUOGYA WIFI</strong></p>
+                <p className="mt-1">Connect to <strong>JOEMENS WIFI</strong></p>
                 <p>Login at: <strong>192.168.88.1</strong></p>
                 {reference && <p className="mt-2 text-xs text-muted-foreground">Reference: {reference}</p>}
               </div>

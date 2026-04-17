@@ -14,6 +14,7 @@ export const Admin = sequelize.define('Admin', {
 export const Package = sequelize.define('Package', {
   id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
   name: { type: DataTypes.STRING, allowNull: false },
+  community: { type: DataTypes.ENUM('town', 'school'), defaultValue: 'town' },
   data_limit: { type: DataTypes.STRING, allowNull: false },
   duration: { type: DataTypes.STRING, allowNull: false },
   price: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
