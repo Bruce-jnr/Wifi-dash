@@ -9,7 +9,7 @@ export const Admin = sequelize.define('Admin', {
   phone: { type: DataTypes.STRING, allowNull: true },
   otp_code: { type: DataTypes.STRING, allowNull: true },
   otp_expires: { type: DataTypes.DATE, allowNull: true }
-});
+}, { tableName: 'Admins' });
 
 export const Package = sequelize.define('Package', {
   id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
@@ -19,7 +19,7 @@ export const Package = sequelize.define('Package', {
   duration: { type: DataTypes.STRING, allowNull: false },
   price: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
   active: { type: DataTypes.BOOLEAN, defaultValue: true }
-});
+}, { tableName: 'Packages' });
 
 export const VoucherRequest = sequelize.define('VoucherRequest', {
   id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
@@ -27,7 +27,7 @@ export const VoucherRequest = sequelize.define('VoucherRequest', {
   package_id: { type: DataTypes.INTEGER, allowNull: false },
   status: { type: DataTypes.ENUM('pending', 'fulfilled'), defaultValue: 'pending' },
   payment_status: { type: DataTypes.ENUM('pending', 'paid'), defaultValue: 'pending' }
-});
+}, { tableName: 'VoucherRequests' });
 
 export const Voucher = sequelize.define('Voucher', {
   id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
@@ -35,7 +35,7 @@ export const Voucher = sequelize.define('Voucher', {
   request_id: { type: DataTypes.INTEGER, allowNull: true },
   package_id: { type: DataTypes.INTEGER, allowNull: false },
   status: { type: DataTypes.ENUM('available', 'issued'), defaultValue: 'available' }
-});
+}, { tableName: 'Vouchers' });
 
 // Relationships
 Package.hasMany(VoucherRequest, { foreignKey: 'package_id' });
@@ -51,7 +51,7 @@ export const AuditLog = sequelize.define('AuditLog', {
   admin_username: { type: DataTypes.STRING, allowNull: false },
   action_type: { type: DataTypes.STRING, allowNull: false },
   description: { type: DataTypes.TEXT, allowNull: false }
-});
+}, { tableName: 'AuditLogs' });
 
 export const initDb = async () => {
   try {
