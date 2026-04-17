@@ -45,7 +45,7 @@ const AdminVouchers = () => {
       const [reqRes, poolRes, pkgRes] = await Promise.all([
         fetch("/api/admin/requests", { headers }),
         fetch("/api/admin/vouchers", { headers }),
-        fetch("/api/client/packages"),
+        fetch("/api/admin/packages", { headers }),
       ]);
       if (reqRes.ok) setRequests(await reqRes.json());
       if (poolRes.ok) setPool(await poolRes.json());

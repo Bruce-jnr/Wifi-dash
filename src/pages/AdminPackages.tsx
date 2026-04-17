@@ -14,7 +14,9 @@ const AdminPackages = () => {
 
   const fetchPackages = async () => {
     try {
-      const res = await fetch("/api/client/packages");
+      const res = await fetch("/api/admin/packages", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
       if (res.ok) {
         const data = await res.json();
         setPackages(data);

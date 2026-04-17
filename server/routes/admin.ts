@@ -178,6 +178,15 @@ router.get('/stats', async (req: Request, res: Response) => {
 
 // ─── Packages CRUD ─────────────────────────────────────────────────────────────
 
+router.get('/packages', async (req: Request, res: Response) => {
+  try {
+    const packages = await Package.findAll();
+    res.json(packages);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch packages' });
+  }
+});
+
 router.post('/packages', async (req: Request, res: Response) => {
   try {
     const pkg: any = await Package.create(req.body);
