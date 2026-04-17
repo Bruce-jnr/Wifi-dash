@@ -106,15 +106,23 @@ router.post('/vouchers/upload', upload.single('file'), async (req: Request, res:
 router.get('/vouchers', async (req: Request, res: Response) => {
   try {
     const packages: any[] = await Package.findAll() as any[];
+    console.log(`[AdminVouchers] Found ${packages.length} packages for pool stats`);
+    
     const stats = await Promise.all(
       packages.map(async (pkg: any) => {
-        const available = await Voucher.count({ where: { package_id: pkg.id, status: 'available' } });
-        const issued = await Voucher.count({ where: { package_id: pkg.id, status: 'issued' } });
-        return { id: pkg.id, name: pkg.name, duration: pkg.duration, price: pkg.price, available, issued };
+        try {
+          const available = await Voucher.count({ where: { package_id: pkg.id, status: 'available' } });
+          const issued = await Voucher.count({ where: { package_id: pkg.id, status: 'issued' } });
+          return { id: pkg.id, name: pkg.name, duration: pkg.duration, price: pkg.price, available, issued, community: pkg.community };
+        } catch (err) {
+          console.error(`[AdminVouchers] Error counting vouchers for package ${pkg.id}:`, err);
+          return { id: pkg.id, name: pkg.name, duration: pkg.duration, price: pkg.price, available: 0, issued: 0, community: pkg.community, error: true };
+        }
       })
     );
     res.json(stats);
   } catch (error) {
+    console.error('[AdminVouchers] Global error:', error);
     res.status(500).json({ error: 'Failed to fetch voucher pool stats' });
   }
 });
