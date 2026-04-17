@@ -14,7 +14,7 @@ const Checkout = () => {
   const [pkg, setPkg] = useState<any>(null);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/client/packages")
+    fetch("/api/client/packages")
       .then(r => r.json())
       .then((data: any[]) => {
         const found = data.find((p: any) => String(p.id) === String(packageId));
@@ -36,7 +36,7 @@ const Checkout = () => {
     setLoading(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/client/request', {
+      const res = await fetch('/api/client/request', {
         method: 'POST',
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone, packageId: pkg.id })

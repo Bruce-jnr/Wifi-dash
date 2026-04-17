@@ -13,7 +13,7 @@ const NetworkCommunity = ({ community }: Props) => {
   const [packages, setPackages] = useState<any[]>([]);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/client/packages")
+    fetch("/api/client/packages")
       .then(r => r.json())
       .then(data => {
         // Filter packages based on the active property and community

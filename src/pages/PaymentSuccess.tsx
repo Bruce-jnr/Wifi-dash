@@ -22,7 +22,7 @@ const PaymentSuccess = () => {
 
     const verify = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/payments/verify/${reference}`);
+        const res = await fetch(`/api/payments/verify/${reference}`);
         const data = await res.json();
         if (res.ok) {
           setVoucherCode(data.voucher.code);
