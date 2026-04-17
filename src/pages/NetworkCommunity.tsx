@@ -13,14 +13,24 @@ const NetworkCommunity = ({ community }: Props) => {
   const [packages, setPackages] = useState<any[]>([]);
 
   useEffect(() => {
-    fetch("/api/client/packages")
+    fetch(`/api/client/packages?community=${community}`)
       .then(r => r.json())
       .then(data => {
-        // Filter packages based on the active property and community
-        const filtered = data.filter((p: any) => p.active && p.community === community);
-        setPackages(filtered);
+        console.log(`Fetched packages for ${community}:`, data);
+        if (Array.isArray(data)) {
+          // Robust filter: if community is missing, treat as 'town'
+          const filtered = data.filter((p: any) => {
+            const pkgComm = p.community || 'town';
+            return p.active && pkgComm === community;
+          });
+          setPackages(filtered);
+        } else {
+          console.error("Invalid data format received:", data);
+        }
       })
-      .catch(() => {});
+      .catch((err) => {
+        console.error("Failed to fetch packages:", err);
+      });
   }, [community]);
 
   const handleBuy = (pkg: any) => {

@@ -7,8 +7,22 @@ const router = express.Router();
 
 router.get('/packages', async (req: Request, res: Response) => {
   try {
-    const packages = await Package.findAll();
-    res.json(packages);
+    const { community } = req.query;
+    let whereClause: any = { active: true };
+    
+    const packages = await Package.findAll({ where: whereClause });
+    
+    // If community is provided, filter specifically.
+    // We treat null community values as 'town' to handle legacy data.
+    if (community) {
+      const filtered = packages.filter((p: any) => {
+        const pkgComm = p.community || 'town';
+        return pkgComm === community;
+      });
+      res.json(filtered);
+    } else {
+      res.json(packages);
+    }
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch packages' });
   }
