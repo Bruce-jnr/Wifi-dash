@@ -20,6 +20,9 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust proxy for production environments (required by express-rate-limit)
+app.set('trust proxy', 1);
+
 // Security Middleware
 app.use(helmet());
 
