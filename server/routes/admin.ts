@@ -104,25 +104,38 @@ router.post('/vouchers/upload', upload.single('file'), async (req: Request, res:
 // ─── Voucher Pool Stats ────────────────────────────────────────────────────────
 
 router.get('/vouchers', async (req: Request, res: Response) => {
+  res.setHeader('X-Debug-Version', '1.0.3');
+  console.log('--- Vouchers API called ---');
   try {
-    const packages: any[] = await Package.findAll() as any[];
-    console.log(`[AdminVouchers] Package.findAll() returned ${packages.length} packages:`, packages.map(p => p.id));
+    const packages = await Package.findAll();
+    console.log(`[AdminVouchers] Found ${packages.length} total packages in DB.`);
     
     const stats = await Promise.all(
       packages.map(async (pkg: any) => {
         try {
-          const available = await Voucher.count({ where: { package_id: pkg.id, status: 'available' } });
-          const issued = await Voucher.count({ where: { package_id: pkg.id, status: 'issued' } });
-          console.log(`[AdminVouchers] Stats for pkg ${pkg.id} (${pkg.name}): Avail=${available}, Issued=${issued}`);
-          return { id: pkg.id, name: pkg.name, duration: pkg.duration, price: pkg.price, available, issued, community: pkg.community };
+          const [available, issued] = await Promise.all([
+            Voucher.count({ where: { package_id: pkg.id, status: 'available' } }),
+            Voucher.count({ where: { package_id: pkg.id, status: 'issued' } })
+          ]);
+          return { 
+            id: pkg.id, 
+            name: pkg.name, 
+            duration: pkg.duration, 
+            price: pkg.price, 
+            available, 
+            issued, 
+            community: pkg.community 
+          };
         } catch (err: any) {
-          console.error(`[AdminVouchers] Error counting vouchers for package ${pkg.id}:`, err.message);
-          return { id: pkg.id, name: pkg.name, duration: pkg.duration, price: pkg.price, available: 0, issued: 0, community: pkg.community, error: true };
+          console.error(`Error for pkg ${pkg.id}:`, err.message);
+          return null; // Filter out failed ones
         }
       })
     );
-    console.log(`[AdminVouchers] Sending ${stats.length} stats objects back to client`);
-    res.json(stats);
+    
+    const filteredStats = stats.filter(s => s !== null);
+    console.log(`[AdminVouchers] Returning ${filteredStats.length} stats items.`);
+    res.json(filteredStats);
   } catch (error: any) {
     console.error('[AdminVouchers] Global error:', error.message);
     res.status(500).json({ error: 'Failed to fetch voucher pool stats' });
