@@ -26,6 +26,20 @@ app.set('trust proxy', 1);
 // Security Middleware
 app.use(helmet());
 
+// Prevent intermediary/proxy/browser caching of API responses.
+// This is important behind shared hosting/proxies (e.g., cPanel/LiteSpeed/Cloudflare),
+// where GET requests may be cached unless explicitly disabled.
+app.use('/api', (req: Request, res: Response, next) => {
+  res.setHeader(
+    'Cache-Control',
+    'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+  );
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  next();
+});
+
 // Restrict CORS to specific origins in production
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
@@ -58,6 +72,8 @@ app.use(express.static(path.join(__dirname, '../dist')));
 
 // SPA Catch-all
 app.use((req: Request, res: Response) => {
+  // Avoid caching the HTML shell so new deployments propagate quickly.
+  res.setHeader('Cache-Control', 'no-cache, max-age=0, must-revalidate');
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 

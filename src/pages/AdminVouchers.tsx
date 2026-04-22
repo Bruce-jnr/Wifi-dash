@@ -43,9 +43,9 @@ const AdminVouchers = () => {
     setRequestsLoading(true);
     try {
       const [reqRes, poolRes, pkgRes] = await Promise.all([
-        fetch("/api/admin/requests", { headers }),
-        fetch("/api/admin/vouchers", { headers }),
-        fetch("/api/admin/packages", { headers }),
+        fetch("/api/admin/requests", { headers, cache: "no-store" }),
+        fetch("/api/admin/vouchers", { headers, cache: "no-store" }),
+        fetch("/api/admin/packages", { headers, cache: "no-store" }),
       ]);
       if (reqRes.ok) setRequests(await reqRes.json());
       if (poolRes.ok) setPool(await poolRes.json());

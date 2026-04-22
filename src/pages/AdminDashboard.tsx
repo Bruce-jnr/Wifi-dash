@@ -19,7 +19,7 @@ const AdminDashboard = () => {
     const headers = { "Authorization": `Bearer ${token}` };
 
     // Fetch live dashboard stats
-    fetch("/api/admin/stats", { headers })
+    fetch("/api/admin/stats", { headers, cache: "no-store" })
       .then(r => {
         if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
         return r.json();
@@ -39,7 +39,7 @@ const AdminDashboard = () => {
       });
 
     // Fetch recent pending requests for the table
-    fetch("/api/admin/requests", { headers })
+    fetch("/api/admin/requests", { headers, cache: "no-store" })
       .then(r => r.json())
       .then((data: any[]) => {
         setRecentRequests(data.slice(0, 10));
