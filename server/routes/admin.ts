@@ -25,7 +25,7 @@ const createAuditLog = async (req: Request, type: string, description: string) =
 router.get('/requests', async (req: Request, res: Response) => {
   try {
     const requests = await VoucherRequest.findAll({
-      where: { status: 'pending' },
+      where: { status: 'pending', payment_status: 'paid' },
       include: [Package]
     });
     res.json(requests);
@@ -174,7 +174,7 @@ router.post('/vouchers/manual', async (req: Request, res: Response) => {
 router.get('/stats', async (req: Request, res: Response) => {
   try {
     const totalPackages = await Package.count();
-    const pendingRequests = await VoucherRequest.count({ where: { status: 'pending' } });
+    const pendingRequests = await VoucherRequest.count({ where: { status: 'pending', payment_status: 'paid' } });
     const fulfilledRequests = await VoucherRequest.count({ where: { status: 'fulfilled' } });
     
     // Calculate total revenue from fulfilled requests

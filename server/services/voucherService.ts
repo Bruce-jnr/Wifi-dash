@@ -6,6 +6,9 @@ export const issueVoucher = async (requestId: number) => {
   if (!vr) throw new Error('Request not found');
   if (vr.status !== 'pending') throw new Error('Request already fulfilled');
 
+  vr.payment_status = 'paid';
+  await vr.save();
+
   // Auto-pick oldest available voucher for the right package
   const voucher: any = await Voucher.findOne({
     where: { package_id: vr.package_id, status: 'available' },
@@ -21,7 +24,6 @@ export const issueVoucher = async (requestId: number) => {
   await voucher.save();
 
   vr.status = 'fulfilled';
-  vr.payment_status = 'paid';
   await vr.save();
 
   try {
