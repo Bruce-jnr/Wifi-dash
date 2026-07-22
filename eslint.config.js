@@ -21,6 +21,9 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
+      // Sequelize v6's untyped define() API requires escape hatches throughout
+      // the server. The TypeScript build remains the source of type correctness.
+      "@typescript-eslint/no-explicit-any": "off",
     },
   },
 );

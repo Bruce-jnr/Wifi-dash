@@ -16,6 +16,7 @@ import AdminVouchers from "./pages/AdminVouchers";
 import AdminStaff from "./pages/AdminStaff";
 import AdminLogs from "./pages/AdminLogs";
 import NotFound from "./pages/NotFound";
+import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 
 const queryClient = new QueryClient();
 
@@ -33,11 +34,13 @@ const App = () => (
           <Route path="/payment/success" element={<PaymentSuccess />} />
           <Route path="/payment/failed" element={<PaymentFailed />} />
           <Route path="/admin" element={<AdminLogin />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/packages" element={<AdminPackages />} />
-          <Route path="/admin/vouchers" element={<AdminVouchers />} />
-          <Route path="/admin/staff" element={<AdminStaff />} />
-          <Route path="/admin/logs" element={<AdminLogs />} />
+          <Route element={<ProtectedAdminRoute />}>
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/packages" element={<AdminPackages />} />
+            <Route path="/admin/vouchers" element={<AdminVouchers />} />
+            <Route path="/admin/staff" element={<AdminStaff />} />
+            <Route path="/admin/logs" element={<AdminLogs />} />
+          </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

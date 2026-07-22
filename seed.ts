@@ -24,7 +24,7 @@ const seed = async () => {
     await (Admin as any).create({
       username: 'admin',
       password: hp,
-      phone: process.env.ADMIN_PHONE || '0550000000'
+      phone: process.env.ADMIN_PHONE || '0546535902'
     });
     console.log('Admin seeded! Default pass: admin123');
   }

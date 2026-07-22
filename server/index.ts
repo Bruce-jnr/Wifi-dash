@@ -32,7 +32,7 @@ app.use(helmet());
 app.use('/api', (req: Request, res: Response, next) => {
   res.setHeader(
     'Cache-Control',
-    'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0'
+    'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
   );
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
@@ -42,22 +42,29 @@ app.use('/api', (req: Request, res: Response, next) => {
 
 // Restrict CORS to specific origins in production
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? [process.env.FRONTEND_URL || ''] 
-    : true,
-  optionsSuccessStatus: 200
+  origin:
+    process.env.NODE_ENV === 'production'
+      ? [process.env.FRONTEND_URL || '']
+      : true,
+  optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
 
-app.use(express.json());
+// Paystack signs the exact request bytes, so the webhook must be mounted before
+// the general JSON parser changes the body representation.
+app.use(
+  '/api/payments/webhook',
+  express.raw({ type: 'application/json', limit: '256kb' }),
+);
+app.use(express.json({ limit: '100kb' }));
 
 // General rate limiting: max 100 requests per 15 minutes
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: 5 * 60 * 1000,
   limit: 100,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
-  message: { error: 'Too many requests, please try again later.' }
+  message: { error: 'Too many requests, please try again later.' },
 });
 app.use('/api', limiter);
 
@@ -77,19 +84,21 @@ app.use((req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
-initDb().then(() => {
-  console.log('Database initialized. Starting server...');
-  const server = app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
+initDb()
+  .then(() => {
+    console.log('Database initialized. Starting server...');
+    const server = app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
 
-  server.on('error', (err) => {
-    console.error('Server error:', err);
-  });
+    server.on('error', (err) => {
+      console.error('Server error:', err);
+    });
 
-  server.on('close', () => {
-    console.log('Server closed');
+    server.on('close', () => {
+      console.log('Server closed');
+    });
+  })
+  .catch((err) => {
+    console.error('Failed to initialize database:', err);
   });
-}).catch(err => {
-  console.error('Failed to initialize database:', err);
-});

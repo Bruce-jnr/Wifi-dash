@@ -8,7 +8,7 @@ const router = express.Router();
 router.get('/packages', async (req: Request, res: Response) => {
   try {
     const { community } = req.query;
-    let whereClause: any = { active: true };
+    const whereClause: any = { active: true };
     
     const packages = await Package.findAll({ where: whereClause });
     
@@ -45,7 +45,7 @@ router.post('/request', requestLimiter, async (req: Request, res: Response) => {
   }
   try {
     const pkg: any = await Package.findByPk(Number(packageId));
-    if (!pkg) {
+    if (!pkg || !pkg.active) {
       res.status(404).json({ error: 'Package not found' });
       return;
     }

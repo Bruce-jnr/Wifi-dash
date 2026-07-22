@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import PackageCard from "@/components/PackageCard";
 import { Wifi, Shield, Smartphone, ChevronLeft } from "lucide-react";
+import type { Package } from "@/lib/types";
 
 interface Props {
   community: 'town' | 'school';
@@ -10,7 +11,7 @@ interface Props {
 
 const NetworkCommunity = ({ community }: Props) => {
   const navigate = useNavigate();
-  const [packages, setPackages] = useState<any[]>([]);
+  const [packages, setPackages] = useState<Package[]>([]);
 
   useEffect(() => {
     fetch(`/api/client/packages?community=${community}`)
@@ -19,7 +20,7 @@ const NetworkCommunity = ({ community }: Props) => {
         console.log(`Fetched packages for ${community}:`, data);
         if (Array.isArray(data)) {
           // Robust filter: if community is missing, treat as 'town'
-          const filtered = data.filter((p: any) => {
+          const filtered = (data as Package[]).filter((p) => {
             const pkgComm = p.community || 'town';
             return p.active && pkgComm === community;
           });
@@ -33,7 +34,7 @@ const NetworkCommunity = ({ community }: Props) => {
       });
   }, [community]);
 
-  const handleBuy = (pkg: any) => {
+  const handleBuy = (pkg: Package) => {
     navigate(`/checkout/${pkg.id}`);
   };
 
@@ -95,7 +96,7 @@ const NetworkCommunity = ({ community }: Props) => {
             {packages.length === 0 ? (
               <p className="text-muted-foreground text-center">No packages available for this community right now.</p>
             ) : (
-              packages.map((pkg: any) => (
+              packages.map((pkg) => (
                 <PackageCard key={pkg.id} pkg={pkg} onBuy={handleBuy} />
               ))
             )}

@@ -1,15 +1,6 @@
 import { Clock, Zap, Wifi } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-interface Package {
-  id: string | number;
-  name: string;
-  price: number;
-  data_limit: string;
-  duration: string;
-  active: boolean;
-  [key: string]: any;
-}
+import type { Package } from "@/lib/types";
 
 interface PackageCardProps {
   pkg: Package;

@@ -7,7 +7,24 @@ import { issueVoucher } from '../services/voucherService.js';
 import { verifyAuth } from './auth.js';
 
 const router = express.Router();
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 1024 * 1024 },
+  fileFilter: (_req, file, callback) => {
+    const allowed = ['text/csv', 'text/plain', 'application/vnd.ms-excel'];
+    callback(null, allowed.includes(file.mimetype));
+  }
+});
+
+const parseVoucherCodes = (text: string) => text
+  .split(/\r?\n/)
+  .map(line => {
+    const trimmed = line.trim();
+    if (!trimmed.startsWith('"')) return trimmed.split(',')[0].trim();
+    const match = trimmed.match(/^"((?:[^"]|"")*)"/);
+    return match ? match[1].replace(/""/g, '"').trim() : '';
+  })
+  .filter(Boolean);
 
 router.use(verifyAuth);
 
@@ -68,10 +85,7 @@ router.post('/vouchers/upload', upload.single('file'), async (req: Request, res:
     if (!pkg) { res.status(404).json({ error: 'Package not found' }); return; }
 
     const text = req.file.buffer.toString('utf8');
-    let codes = text
-      .split(/\r?\n/)
-      .map(l => l.trim())
-      .filter(l => l.length > 0);
+    let codes = parseVoucherCodes(text);
 
     // Skip header if present
     if (codes.length > 0 && (codes[0].toLowerCase() === 'code' || codes[0].toLowerCase() === 'voucher')) {
@@ -90,7 +104,8 @@ router.post('/vouchers/upload', upload.single('file'), async (req: Request, res:
         where: { code },
         defaults: { code, package_id: Number(package_id), status: 'available' }
       });
-      created ? inserted++ : skipped++;
+      if (created) inserted++;
+      else skipped++;
     }
 
     await createAuditLog(req, 'UPLOAD_VOUCHERS', `Uploaded ${inserted} voucher(s) for package '${(pkg as any).name}' (${skipped} duplicates skipped)`);
@@ -212,7 +227,12 @@ router.get('/packages', async (req: Request, res: Response) => {
 
 router.post('/packages', async (req: Request, res: Response) => {
   try {
-    const pkg: any = await Package.create(req.body);
+    const { name, community, data_limit, duration, price, active } = req.body;
+    if (!name || !data_limit || !duration || !Number.isFinite(Number(price))) {
+      res.status(400).json({ error: 'Name, data limit, duration, and a valid price are required' });
+      return;
+    }
+    const pkg: any = await Package.create({ name, community, data_limit, duration, price, active });
     await createAuditLog(req, 'CREATE_PACKAGE', `Created package '${pkg.name}'`);
     res.json(pkg);
   } catch (error) {
@@ -224,7 +244,8 @@ router.put('/packages/:id', async (req: Request, res: Response) => {
   try {
     const pkg: any = await Package.findByPk(Number(req.params.id));
     if (!pkg) { res.status(404).json({ error: 'Package not found' }); return; }
-    await pkg.update(req.body);
+    const { name, community, data_limit, duration, price, active } = req.body;
+    await pkg.update({ name, community, data_limit, duration, price, active });
     await createAuditLog(req, 'UPDATE_PACKAGE', `Updated package '${pkg.name}'`);
     res.json(pkg);
   } catch (error) {
@@ -259,6 +280,10 @@ router.get('/staff', async (req: Request, res: Response) => {
 router.post('/staff', async (req: Request, res: Response) => {
   const { username, email, phone, password } = req.body;
   try {
+    if (!username || typeof password !== 'string' || password.length < 8) {
+      res.status(400).json({ error: 'Username and a password of at least 8 characters are required' });
+      return;
+    }
     const hp = await bcrypt.hash(password, 10);
     const newAdmin = await Admin.create({ username, email, phone, password: hp });
     await createAuditLog(req, 'CREATE_STAFF', `Created admin account '${username}'`);

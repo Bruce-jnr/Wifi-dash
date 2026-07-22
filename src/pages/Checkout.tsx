@@ -5,24 +5,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Phone, CreditCard, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import type { Package } from "@/lib/types";
 
 const Checkout = () => {
   const { packageId } = useParams();
   const navigate = useNavigate();
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
-  const [pkg, setPkg] = useState<any>(null);
+  const [pkg, setPkg] = useState<Package | null>(null);
 
   useEffect(() => {
     fetch("/api/client/packages")
       .then(r => r.json())
-      .then((data: any[]) => {
-        const found = data.find((p: any) => String(p.id) === String(packageId));
+      .then((data: Package[]) => {
+        const found = data.find((p) => String(p.id) === String(packageId));
         if (!found) { navigate("/"); return; }
         setPkg(found);
       })
       .catch(() => navigate("/"));
-  }, [packageId]);
+  }, [packageId, navigate]);
 
   if (!pkg) return null;
 
