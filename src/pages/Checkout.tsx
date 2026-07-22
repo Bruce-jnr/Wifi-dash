@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, Phone, CreditCard, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Package } from "@/lib/types";
+import { Checkbox } from "@/components/ui/checkbox";
+import TermsAndConditionsModal from "@/components/TermsAndConditionsModal";
 
 const Checkout = () => {
   const { packageId } = useParams();
@@ -13,6 +15,10 @@ const Checkout = () => {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [pkg, setPkg] = useState<Package | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  // Present the terms immediately on every checkout. Customers must make an
+  // explicit choice for this purchase; acceptance is not persisted in storage.
+  const [termsOpen, setTermsOpen] = useState(true);
 
   useEffect(() => {
     fetch("/api/client/packages")
@@ -30,6 +36,11 @@ const Checkout = () => {
   const isValidPhone = /^0[235]\d{8}$/.test(phone);
 
   const handlePayment = async () => {
+    if (!termsAccepted) {
+      toast.error("Please accept the Terms and Conditions first");
+      setTermsOpen(true);
+      return;
+    }
     if (!isValidPhone) {
       toast.error("Please enter a valid Ghana phone number");
       return;
@@ -40,7 +51,7 @@ const Checkout = () => {
       const res = await fetch('/api/client/request', {
         method: 'POST',
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, packageId: pkg.id })
+        body: JSON.stringify({ phone, packageId: pkg.id, termsAccepted: true, termsVersion: "1.0" })
       });
       
       const data = await res.json();
@@ -98,6 +109,28 @@ const Checkout = () => {
           </div>
         </div>
 
+        <div className="mb-5 rounded-lg border bg-card p-4">
+          <div className="flex items-start gap-3">
+            <Checkbox
+              id="terms"
+              checked={termsAccepted}
+              onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+              aria-describedby="terms-description"
+            />
+            <div className="space-y-1 leading-none">
+              <label htmlFor="terms" className="cursor-pointer text-sm font-medium text-foreground">
+                I accept the Terms and Conditions
+              </label>
+              <p id="terms-description" className="text-xs leading-5 text-muted-foreground">
+                You must accept before entering your phone number.{" "}
+                <button type="button" onClick={() => setTermsOpen(true)} className="font-medium text-primary underline underline-offset-2">
+                  Read the Terms and Conditions
+                </button>
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Phone Input */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-foreground mb-2">
@@ -111,6 +144,7 @@ const Checkout = () => {
             onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
             className="text-lg h-12"
             maxLength={10}
+            disabled={!termsAccepted}
           />
           <p className="text-xs text-muted-foreground mt-1.5">
             Your voucher code will be sent via SMS to this number
@@ -123,7 +157,7 @@ const Checkout = () => {
           size="lg"
           className="w-full h-14 text-lg"
           onClick={handlePayment}
-          disabled={!isValidPhone || loading}
+          disabled={!termsAccepted || !isValidPhone || loading}
         >
           {loading ? (
             <Loader2 className="h-5 w-5 animate-spin mr-2" />
@@ -137,6 +171,14 @@ const Checkout = () => {
           Secured by Paystack • Mobile Money Ghana
         </p>
       </div>
+      <TermsAndConditionsModal
+        open={termsOpen}
+        onOpenChange={setTermsOpen}
+        onAccept={() => {
+          setTermsAccepted(true);
+          setTermsOpen(false);
+        }}
+      />
     </div>
   );
 };

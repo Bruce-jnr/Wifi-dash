@@ -26,7 +26,9 @@ export const VoucherRequest = sequelize.define('VoucherRequest', {
   client_phone: { type: DataTypes.STRING, allowNull: false },
   package_id: { type: DataTypes.INTEGER, allowNull: false },
   status: { type: DataTypes.ENUM('pending', 'fulfilled'), defaultValue: 'pending' },
-  payment_status: { type: DataTypes.ENUM('pending', 'paid'), defaultValue: 'pending' }
+  payment_status: { type: DataTypes.ENUM('pending', 'paid'), defaultValue: 'pending' },
+  terms_accepted_at: { type: DataTypes.DATE, allowNull: true },
+  terms_version: { type: DataTypes.STRING(20), allowNull: true }
 }, { tableName: 'VoucherRequests' });
 
 export const Voucher = sequelize.define('Voucher', {
@@ -56,6 +58,22 @@ export const AuditLog = sequelize.define('AuditLog', {
 export const initDb = async () => {
   try {
     await sequelize.sync();
+    // sequelize.sync() creates fields for new installations but does not add
+    // fields to an existing table. Apply this small, additive migration safely.
+    const queryInterface = sequelize.getQueryInterface();
+    const columns = await queryInterface.describeTable('VoucherRequests');
+    if (!columns.terms_accepted_at) {
+      await queryInterface.addColumn('VoucherRequests', 'terms_accepted_at', {
+        type: DataTypes.DATE,
+        allowNull: true,
+      });
+    }
+    if (!columns.terms_version) {
+      await queryInterface.addColumn('VoucherRequests', 'terms_version', {
+        type: DataTypes.STRING(20),
+        allowNull: true,
+      });
+    }
     console.log('Database models synchronized successfully!');
   } catch (err) {
     console.error('Failed to sync database models:', err);

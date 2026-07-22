@@ -38,9 +38,13 @@ const requestLimiter = rateLimit({
 });
 
 router.post('/request', requestLimiter, async (req: Request, res: Response) => {
-  const { phone, packageId } = req.body;
+  const { phone, packageId, termsAccepted, termsVersion } = req.body;
   if (!phone || !packageId) {
     res.status(400).json({ error: 'Phone and package ID are required' });
+    return;
+  }
+  if (termsAccepted !== true || termsVersion !== '1.0') {
+    res.status(400).json({ error: 'You must accept the current Terms and Conditions' });
     return;
   }
   try {
@@ -54,7 +58,9 @@ router.post('/request', requestLimiter, async (req: Request, res: Response) => {
       client_phone: phone,
       package_id: packageId,
       status: 'pending',
-      payment_status: 'pending'
+      payment_status: 'pending',
+      terms_accepted_at: new Date(),
+      terms_version: termsVersion
     });
 
     const email = `${phone}@customer.com`;
